@@ -91,7 +91,12 @@ sub domaincheck {
     
     my %domains = map { $_ => -1 } @{$params->{'domains'}};
     my $DomainList = join(',', keys %domains);
-    my $xml = $self->_request(Command => 'namecheap.domains.check', ClientIp => $params->{'ClientIp'}, DomainList => $DomainList);
+    my $xml = $self->_request(
+        Command => 'namecheap.domains.check',
+        ClientIp => $params->{'ClientIp'},
+        UserName => $params->{'UserName'},
+        DomainList => $DomainList,
+    );
     
     if ($xml->{Status} eq 'ERROR') {
         print STDERR Data::Dumper::Dumper \$xml;
@@ -113,6 +118,79 @@ sub domaincheck {
     return \%domains;
 }
 
+=head2 $api->domaincreate
+
+Example:
+
+  $api->domaincreate(
+      UserName => 'username', # optional if DefaultUser specified in $api
+      ClientIp => '1.2.3.4', # optional if DefaultIp specified in $api
+      DomainName => 'example.com',
+      Years => 1,
+      Registrant => {
+          OrganizationName => 'Example Dot Com', # optional
+          FirstName => 'Domain',
+          LastName => 'Manager',
+          Address1 => '123 Fake Street',
+          Address2 => 'Suite 555', # optional
+          City => 'Univille',
+          StateProvince => 'SD',
+          PostalCode => '12345',
+          Country => 'USA',
+          Phone => '+1.2025551212',
+          Fax => '+1.2025551212', # optional
+          EmailAddress => 'foo@example.com',
+      },
+      Tech => {
+          # same fields as Registrant
+      },
+      Admin => {
+          # same fields as Registrant
+      },
+      AuxBilling => {
+          # same fields as Registrant
+      },
+      Nameservers => 'ns1.foo.com,ns2.bar.com', # optional
+      AddFreeWhoisguard => 'yes', # or 'no', default 'yes'
+      WGEnabled => 'yes', # or 'no', default 'yes'
+  );
+
+Unspecified contacts will be automatically copied from the registrant, which
+must be provided.
+
+=cut
+
+sub domaincreate {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    my %request = (
+        Command => 'namecheap.domains.create',
+        ClientIp => $params->{'ClientIp'},
+        UserName => $params->{'UserName'},
+        DomainName => $params->{'DomainName'},
+        Years => $params->{Years},
+        Nameservers => $params->{'Nameservers'},
+        AddFreeWhoisguard => $params->{'AddFreeWhoisguard'} || 'yes',
+        WGEnabled => $params->{'WGEnabled'} || 'yes',
+    );
+    
+    foreach my $contact (qw(Registrant Tech Admin AuxBilling)) {
+        $params->{$contact} ||= $params->{Registrant};
+        map { $request{"$contact$_"} = $params->{$contact}{$_} } keys %{$params->{$contact}};
+    }
+    
+    my $xml = $self->_request(%request);
+
+    if ($xml->{Status} eq 'ERROR') {
+        print STDERR Data::Dumper::Dumper \$xml;
+        return;
+    }
+    
+    return $xml->{CommandResponse}->{DomainCreateResult};
+}
+
 sub _request {
     my $self = shift;
     my %reqparams = @_;
@@ -128,7 +206,8 @@ sub _request {
     my $url = sprintf('%s?ApiUser=%s&ApiKey=%s&UserName=%s&Command=%s&ClientIp=%s&',
         $self->{'ApiUrl'}, $self->{'ApiUser'}, $self->{'ApiKey'},
         $username, delete($reqparams{'Command'}), $clientip);
-    $url .= join('&', join('=', map { uri_escape($_) } each %reqparams));
+    $url .= join('&', map { join('=', map { uri_escape($_) } each %reqparams) } keys %reqparams);
+    #print STDERR "Sent URL $url\n";
     my $response = $ua->get($url);
     
     unless ($response->is_success) {
