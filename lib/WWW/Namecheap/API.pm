@@ -171,7 +171,7 @@ sub domaincreate {
         UserName => $params->{'UserName'},
         DomainName => $params->{'DomainName'},
         Years => $params->{Years},
-        Nameservers => $params->{'Nameservers'},
+        Nameservers => $params->{'Nameservers'} || '',
         AddFreeWhoisguard => $params->{'AddFreeWhoisguard'} || 'yes',
         WGEnabled => $params->{'WGEnabled'} || 'yes',
     );
@@ -189,6 +189,52 @@ sub domaincreate {
     }
     
     return $xml->{CommandResponse}->{DomainCreateResult};
+}
+
+=head2 $api->domainlist
+
+Get a list of domains.  Automatically "pages" through for you because it's
+awesome like that.
+
+=cut
+
+sub domainlist {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    my %request = (
+        Command => 'namecheap.domains.getList',
+        ClientIp => $params->{'ClientIp'},
+        UserName => $params->{'UserName'},
+        PageSize => 100,
+        Page => 1,
+        ListType => $params->{'ListType'} || '',
+        SearchTerm => $params->{'SearchTerm'} || '',
+    );
+    
+    my @domains;
+    
+    my $break = 0;
+    while (1) {
+        my $xml = $self->_request(%request);
+        
+        if ($xml->{Status} eq 'ERROR') {
+            print STDERR Data::Dumper::Dumper \$xml;
+            last;
+        }
+        
+        #print STDERR Data::Dumper::Dumper \$xml;
+        
+        push(@domains, @{$xml->{CommandResponse}->{DomainGetListResult}->{Domain}});
+        if ($xml->{CommandResponse}->{Paging}->{TotalItems} <= ($request{Page} * $request{PageSize})) {
+            last;
+        } else {
+            $request{Page}++;
+        }
+    }
+    
+    return \@domains;
 }
 
 sub _request {

@@ -30,5 +30,5 @@ my %create = (
 );
 
 my $result = $api->domaincreate(%create);
-is($result->{Domain}, "wwwnamecheapapi$$.info", 'Registered domain');
+is($result->{Domain}, "wwwnamecheapapi$$.com", 'Registered domain');
 is($result->{Registered}, 'true', 'Registration success');
