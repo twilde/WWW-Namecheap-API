@@ -13,7 +13,10 @@ my $builder = Module::Build->new(
     },
     requires => {
         'perl' => 5.006,
-        'LWP' => 0,
+        'LWP::UserAgent' => 0,
+        'LWP::Protocol::https' => 0,
+        'URI::Escape' => 0,
+        'XML::Simple' => 0,
     },
     add_to_cleanup      => [ 'WWW-Namecheap-API-*' ],
     create_makefile_pl => 'traditional',

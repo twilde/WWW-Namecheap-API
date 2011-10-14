@@ -5,6 +5,9 @@ use strict;
 use warnings;
 use Carp();
 use LWP::UserAgent();
+use URI::Escape;
+use XML::Simple;
+use Data::Dumper();
 
 =head1 NAME
 
@@ -17,12 +20,14 @@ Version 0.01
 =cut
 
 our $VERSION = '0.01';
-our $PROD_API = 'https://api.namecheap.com/xml.response';
-our $TEST_API = 'https://api.sandbox.namecheap.com/xml.response';
+our %APIURL = (
+    prod => 'https://api.namecheap.com/xml.response',
+    test => 'https://api.sandbox.namecheap.com/xml.response',
+);
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+Perl interface to the Namecheap API.  Yeah, use it.
 
 Perhaps a little code snippet.
 
@@ -31,51 +36,118 @@ Perhaps a little code snippet.
     my $foo = WWW::Namecheap::API->new();
     ...
 
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
 sub new {
     my $class = shift;
     
-    my %params;
-    if (@_ % 2 == 0) {
-        %params = @_;
-    } elsif (ref($_[0]) eq 'HASH') {
-        %params = %{$_[0]};
-    } else {
-        Carp::croak("${class}->new(): Unknown parameter passing method.");
+    my $params = _argparse(@_);
+    
+    for (qw(ApiUser ApiKey)) {
+        Carp::croak("${class}->new(): Mandatory parameter $_ not provided.") unless $params->{$_};
     }
     
-    for (qw(apiuser apikey username)) {
-        Carp::croak("${class}->new(): Mandatory parameter $_ not provided.") unless $params{$_};
-    }
-    
-    my %self = (
-        apiuser => $params{'apiuser'},
-        apikey => $params{'apikey'},
-        username => $params{'username'},
-        agent => $params{'agent'} || "WWW::Namecheap::API/$VERSION",
+    my $ua = LWP::UserAgent->new(
+        agent => $params->{'Agent'} || "WWW::Namecheap::API/$VERSION",
     );
+    
+    my $apiurl;
+    if ($params->{'ApiUrl'}) {
+        $apiurl = $params->{'ApiUrl'}; # trust the user?!?!
+    } else {
+        if ($params->{'System'}) {
+            $apiurl = $APIURL{$params->{'System'}};
+        } else {
+            $apiurl = $APIURL{'test'};
+        }
+    }
+    
+    my $self = {
+        ApiUrl => $apiurl,
+        ApiUser => $params->{'ApiUser'},
+        ApiKey => $params->{'ApiKey'},
+        DefaultUser => $params->{'DefaultUser'} || $params->{'ApiUser'},
+        DefaultIp => $params->{'DefaultIp'},
+        _ua => $ua,
+    };
     
     return bless($self, $class);
 }
 
-sub function1 {
-}
+=head2 $api->domaincheck
 
-=head2 function2
+Check a list of domains.
 
 =cut
 
-sub function2 {
+sub domaincheck {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    my %domains = map { $_ => -1 } @{$params->{'domains'}};
+    my $DomainList = join(',', keys %domains);
+    my $xml = $self->_request(Command => 'namecheap.domains.check', ClientIp => $params->{'ClientIp'}, DomainList => $DomainList);
+    
+    if ($xml->{Status} eq 'ERROR') {
+        print STDERR Data::Dumper::Dumper \$xml;
+        return;
+    }
+    
+    foreach my $entry (@{$xml->{CommandResponse}->{DomainCheckResult}}) {
+        unless ($domains{$entry->{Domain}}) {
+            Carp::carp("Unexpected domain found: $entry->{Domain}");
+            next;
+        }
+        if ($entry->{Available} eq 'true') {
+            $domains{$entry->{Domain}} = 1;
+        } else {
+            $domains{$entry->{Domain}} = 0;
+        }
+    }
+    
+    return \%domains;
+}
+
+sub _request {
+    my $self = shift;
+    my %reqparams = @_;
+    
+    my $clientip = delete($reqparams{'ClientIp'}) || $self->{'DefaultIp'};
+    unless ($clientip) {
+        Carp::carp("No Client IP or default IP specified, cannot perform request.");
+        return;
+    }
+    my $username = delete($reqparams{'UserName'}) || $self->{'DefaultUser'};
+    
+    my $ua = $self->{_ua}; # convenience
+    my $url = sprintf('%s?ApiUser=%s&ApiKey=%s&UserName=%s&Command=%s&ClientIp=%s&',
+        $self->{'ApiUrl'}, $self->{'ApiUser'}, $self->{'ApiKey'},
+        $username, delete($reqparams{'Command'}), $clientip);
+    $url .= join('&', join('=', map { uri_escape($_) } each %reqparams));
+    my $response = $ua->get($url);
+    
+    unless ($response->is_success) {
+        Carp::carp("Request failed: " . $response->message);
+        return;
+    }
+    
+    return XMLin($response->content);
+}
+    
+
+sub _argparse {
+    my $hashref;
+    if (@_ % 2 == 0) {
+        $hashref = { @_ }
+    } elsif (ref($_[0]) eq 'HASH') {
+        $hashref = \%{$_[0]};
+    }
+    return $hashref;
 }
 
 =head1 AUTHOR
@@ -87,7 +159,6 @@ Tim Wilde, C<< <twilde at cpan.org> >>
 Please report any bugs or feature requests to C<bug-www-namecheap-api at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=WWW-Namecheap-API>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
-
 
 
 
