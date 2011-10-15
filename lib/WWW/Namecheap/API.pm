@@ -237,6 +237,32 @@ sub domainlist {
     return \@domains;
 }
 
+=head2 $api->domaingetcontacts
+
+=cut
+
+sub domaingetcontacts {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    return unless $params->{'DomainName'};
+    
+    my %request = (
+        Command => 'namecheap.domains.getContacts',
+        %$params,
+    );
+    
+    my $xml = $self->_request(%request);
+    
+    if ($xml->{Status} eq 'ERROR') {
+        print STDERR Data::Dumper::Dumper \$xml;
+        return;
+    }
+    
+    return $xml->{CommandResponse}->{DomainContactsResult};
+}
+
 sub _request {
     my $self = shift;
     my %reqparams = @_;
