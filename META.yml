@@ -1,0 +1,28 @@
+---
+abstract: 'Perl interface to the Namecheap API'
+author:
+  - 'Tim Wilde <twilde@cpan.org>'
+build_requires:
+  Test::More: 0
+configure_requires:
+  Module::Build: 0.38
+dynamic_config: 1
+generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.110930'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: WWW-Namecheap-API
+provides:
+  WWW::Namecheap::API:
+    file: lib/WWW/Namecheap/API.pm
+    version: 0.01
+requires:
+  LWP::Protocol::https: 0
+  LWP::UserAgent: 0
+  URI::Escape: 0
+  XML::Simple: 0
+  perl: 5.006
+resources:
+  license: http://dev.perl.org/licenses/
+version: 0.01
