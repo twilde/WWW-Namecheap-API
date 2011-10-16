@@ -18,6 +18,7 @@ my $expected_result = {
     'krellis.org' => 1,
     'team-cymru.com' => 1,
     'thisisalongbadfaketestdomain.com' => 1,
+#    'apigetcontact.net' => 0,
 };
 
-is_deeply($api->domaincheck(domains => [keys %$expected_result]), $expected_result);
+is_deeply($api->domain->check(domains => [keys %$expected_result]), $expected_result);

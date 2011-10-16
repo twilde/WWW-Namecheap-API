@@ -21,7 +21,8 @@ my %create = (
         LastName => 'Test',
         Address1 => '123 Fake Street',
         City => 'Univille',
-        StateProvince => 'SD',
+        StateProvince => 'P',
+        StateProvinceChoice => 'SD',
         PostalCode => '12345',
         Country => 'US',
         Phone => '+1.2125551212',
@@ -29,13 +30,13 @@ my %create = (
     },
 );
 
-my $result = $api->domaincreate(%create);
+my $result = $api->domain->create(%create);
 is($result->{Domain}, "wwwnamecheapapi$$.com", 'Registered domain');
 is($result->{Registered}, 'true', 'Registration success');
 
 my $tests = 3;
 
-my $contacts = $api->domaingetcontacts(DomainName => $create{DomainName});
+my $contacts = $api->domain->getcontacts(DomainName => $create{DomainName});
 foreach my $key (keys %{$create{Registrant}}) {
     is($contacts->{Registrant}->{$key}, $create{Registrant}->{$key});
     is($contacts->{Tech}->{$key}, $create{Registrant}->{$key});
@@ -43,5 +44,8 @@ foreach my $key (keys %{$create{Registrant}}) {
     is($contacts->{AuxBilling}->{$key}, $create{Registrant}->{$key});
     $tests += 4;
 }
+
+use Data::Dumper();
+print STDERR Data::Dumper::Dumper \$contacts;
 
 done_testing($tests);

@@ -12,7 +12,7 @@ my $api = WWW::Namecheap::API->new(
 
 isa_ok($api, 'WWW::Namecheap::API');
 
-my $domains = $api->domainlist();
+my $domains = $api->domain->list;
 isa_ok($domains, 'ARRAY');
 
 my $tests = 2;
