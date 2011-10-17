@@ -260,6 +260,97 @@ sub gettldlist {
     return $self->{_tldlist_cache};
 }
 
+=head2 $domain->transfer
+
+=cut
+
+sub transfer {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    my %request = (
+        Command => 'namecheap.domains.transfer.create',
+        %$params,
+    );
+    
+    my $xml = $self->api->request(%request);
+    
+    if ($xml->{Status} eq 'ERROR') {
+        print STDERR Data::Dumper::Dumper \$xml;
+        return;
+    }
+    
+    return $xml->{CommandResponse}->{DomainTransferCreateResult};
+}
+
+=head2 $domain->transferstatus
+
+=cut
+
+sub transferstatus {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    my %request = (
+        Command => 'namecheap.domains.transfer.getStatus',
+        %$params,
+    );
+    
+    my $xml = $self->api->request(%request);
+    
+    if ($xml->{Status} eq 'ERROR') {
+        print STDERR Data::Dumper::Dumper \$xml;
+        return;
+    }
+    
+    return $xml->{CommandResponse}->{DomainTransferGetStatusResult};
+}
+
+=head2 $domain->transferlist
+
+=cut
+
+sub transferlist {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    my %request = (
+        Command => 'namecheap.domains.transfer.getList',
+        ClientIp => $params->{'ClientIp'},
+        UserName => $params->{'UserName'},
+        PageSize => 100,
+        Page => 1,
+        ListType => $params->{'ListType'} || '',
+        SearchTerm => $params->{'SearchTerm'} || '',
+    );
+    
+    my @transfers;
+    
+    my $break = 0;
+    while (1) {
+        my $xml = $self->api->request(%request);
+        
+        if ($xml->{Status} eq 'ERROR') {
+            print STDERR Data::Dumper::Dumper \$xml;
+            last;
+        }
+        
+        #print STDERR Data::Dumper::Dumper \$xml;
+        
+        push(@transfers, @{$xml->{CommandResponse}->{TransferGetListResult}->{Transfer}});
+        if ($xml->{CommandResponse}->{Paging}->{TotalItems} <= ($request{Page} * $request{PageSize})) {
+            last;
+        } else {
+            $request{Page}++;
+        }
+    }
+    
+    return \@transfers;
+}
+
 =head2 $domain->api()
 
 Accessor for internal API object.
