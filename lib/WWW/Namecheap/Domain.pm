@@ -237,6 +237,29 @@ sub getcontacts {
     return $xml->{CommandResponse}->{DomainContactsResult};
 }
 
+=head2 $domain->gettldlist
+
+=cut
+
+sub gettldlist {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    my %request = (
+        Command => 'namecheap.domains.getTldList',
+        %$params,
+    );
+    
+    if (!$self->{_tldlist_cachetime} || time() - $self->{_tldlist_cachetime} > 3600) {
+        my $xml = $self->api->request(%request);
+        $self->{_tldlist_cache} = $xml->{CommandResponse}->{Tlds}->{Tld};
+        $self->{_tldlist_cachetime} = time();
+    }
+    
+    return $self->{_tldlist_cache};
+}
+
 =head2 $domain->api()
 
 Accessor for internal API object.

@@ -8,9 +8,11 @@ META.json
 META.yml
 README
 t/00-load.t
-t/domaincheck.t
-t/domainlist.t
-t/domainreg.t
+t/domain-check.t
+t/domain-create.t
+t/domain-getcontacts.t
+t/domain-gettldlist.t
+t/domain-list.t
 t/manifest.t
 t/pod-coverage.t
 t/pod.t
