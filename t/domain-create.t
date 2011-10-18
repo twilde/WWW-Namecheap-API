@@ -21,8 +21,7 @@ my %create = (
         LastName => 'Test',
         Address1 => '123 Fake Street',
         City => 'Univille',
-        StateProvince => 'P',
-        StateProvinceChoice => 'SD',
+        StateProvince => 'SD',
         PostalCode => '12345',
         Country => 'US',
         Phone => '+1.2125551212',
@@ -33,19 +32,30 @@ my %create = (
 my $result = $api->domain->create(%create);
 is($result->{Domain}, "wwwnamecheapapi$$.com", 'Registered domain');
 is($result->{Registered}, 'true', 'Registration success');
+like($result->{DomainID}, qr/^\d+$/);
+like($result->{OrderID}, qr/^\d+$/);
+like($result->{TransactionID}, qr/^\d+$/);
+like($result->{ChargedAmount}, qr/^\d+[.]\d+$/);
 
-my $tests = 3;
+my $tests = 7;
 
 my $contacts = $api->domain->getcontacts(DomainName => $create{DomainName});
 foreach my $key (keys %{$create{Registrant}}) {
-    is($contacts->{Registrant}->{$key}, $create{Registrant}->{$key});
-    is($contacts->{Tech}->{$key}, $create{Registrant}->{$key});
-    is($contacts->{Admin}->{$key}, $create{Registrant}->{$key});
-    is($contacts->{AuxBilling}->{$key}, $create{Registrant}->{$key});
+    if ($key eq 'StateProvince') {
+        is($contacts->{Registrant}->{StateProvinceChoice}, $create{Registrant}->{$key});
+        is($contacts->{Tech}->{StateProvinceChoice}, $create{Registrant}->{$key});
+        is($contacts->{Admin}->{StateProvinceChoice}, $create{Registrant}->{$key});
+        is($contacts->{AuxBilling}->{StateProvinceChoice}, $create{Registrant}->{$key});
+    } else {
+        is($contacts->{Registrant}->{$key}, $create{Registrant}->{$key});
+        is($contacts->{Tech}->{$key}, $create{Registrant}->{$key});
+        is($contacts->{Admin}->{$key}, $create{Registrant}->{$key});
+        is($contacts->{AuxBilling}->{$key}, $create{Registrant}->{$key});
+    }
     $tests += 4;
 }
 
-use Data::Dumper();
-print STDERR Data::Dumper::Dumper \$contacts;
+#use Data::Dumper();
+#print STDERR Data::Dumper::Dumper \$contacts;
 
 done_testing($tests);
