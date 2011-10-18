@@ -145,7 +145,7 @@ sub create {
         UserName => $params->{'UserName'},
         DomainName => $params->{'DomainName'},
         Years => $params->{Years},
-        Nameservers => $params->{'Nameservers'} || '',
+        Nameservers => $params->{'Nameservers'},
         AddFreeWhoisguard => $params->{'AddFreeWhoisguard'} || 'yes',
         WGEnabled => $params->{'WGEnabled'} || 'yes',
     );
@@ -183,8 +183,8 @@ sub list {
         UserName => $params->{'UserName'},
         PageSize => 100,
         Page => 1,
-        ListType => $params->{'ListType'} || '',
-        SearchTerm => $params->{'SearchTerm'} || '',
+        ListType => $params->{'ListType'},
+        SearchTerm => $params->{'SearchTerm'},
     );
     
     my @domains;
@@ -323,8 +323,8 @@ sub transferlist {
         UserName => $params->{'UserName'},
         PageSize => 100,
         Page => 1,
-        ListType => $params->{'ListType'} || '',
-        SearchTerm => $params->{'SearchTerm'} || '',
+        ListType => $params->{'ListType'},
+        SearchTerm => $params->{'SearchTerm'},
     );
     
     my @transfers;

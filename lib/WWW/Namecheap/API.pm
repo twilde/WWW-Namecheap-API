@@ -99,6 +99,8 @@ sub request {
     }
     my $username = delete($reqparams{'UserName'}) || $self->{'DefaultUser'};
     
+    map { delete($reqparams{$_}) unless defined($reqparams{$_}) } keys %reqparams;
+    
     my $ua = $self->{_ua}; # convenience
     my $url = sprintf('%s?ApiUser=%s&ApiKey=%s&UserName=%s&Command=%s&ClientIp=%s&',
         $self->{'ApiUrl'}, $self->{'ApiUser'}, $self->{'ApiKey'},
