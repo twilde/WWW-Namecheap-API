@@ -51,6 +51,94 @@ sub new {
     return bless($self, $class);
 }
 
+=head2 $dns->setnameservers
+
+    $dns->setnameservers(
+        DomainName => 'example.com',
+        Nameservers => [
+            'ns1.example.com',
+            'ns2.example.com',
+        ],
+        DefaultNS => 0,
+    );
+    
+    or
+    
+    $dns->setnameservers(
+        DomainName => 'example.com',
+        DefaultNS => 1,
+    );
+
+=cut
+
+sub setnameservers {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    return unless $params->{DomainName};
+    
+    my %request = (
+        ClientIp => $params->{'ClientIp'},
+        UserName => $params->{'UserName'},
+    );
+    
+    if ($params->{DefaultNS}) {
+        $request{Command} = 'namecheap.domains.dns.setDefault';
+    } else {
+        $request{Command} = 'namecheap.domains.dns.setCustom';
+        $request{Nameservers} = join(',', @{$params->{Nameservers}});
+    }
+    
+    my ($sld, $tld) = split(/[.]/, $params->{DomainName}, 2);
+    $request{SLD} = $sld;
+    $request{TLD} = $tld;
+    
+    my $xml = $self->api->request(%request);
+    
+    if ($xml->{Status} eq 'ERROR') {
+        print STDERR Data::Dumper::Dumper \$xml;
+        return;
+    }
+    
+    if ($params->{DefaultNS}) {
+        return $xml->{CommandResponse}->{DomainDNSSetDefaultResult};
+    } else {
+        return $xml->{CommandResponse}->{DomainDNSSetCustomResult};
+    }
+}
+
+=head2 $dns->getnameservers
+
+=cut
+
+sub getnameservers {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    return unless $params->{DomainName};
+    
+    my %request = (
+        Command => 'namecheap.domains.dns.getList',
+        ClientIp => $params->{'ClientIp'},
+        UserName => $params->{'UserName'},
+    );
+    
+    my ($sld, $tld) = split(/[.]/, $params->{DomainName}, 2);
+    $request{SLD} = $sld;
+    $request{TLD} = $tld;
+    
+    my $xml = $self->api->request(%request);
+    
+    if ($xml->{Status} eq 'ERROR') {
+        print STDERR Data::Dumper::Dumper \$xml;
+        return;
+    }
+    
+    return $xml->{CommandResponse}->{DomainDNSGetListResult};
+}
+
 =head2 $dns->api()
 
 Accessor for internal API object.

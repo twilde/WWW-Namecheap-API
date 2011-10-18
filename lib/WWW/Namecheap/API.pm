@@ -11,6 +11,7 @@ use Data::Dumper ();
 
 # For convenience methods
 use WWW::Namecheap::Domain ();
+use WWW::Namecheap::DNS ();
 
 =head1 NAME
 
@@ -130,6 +131,24 @@ sub domain {
     }
     
     return $self->{_domain} = WWW::Namecheap::Domain->new(API => $self);
+}
+
+=head2 $api->dns
+
+Helper method to create and return a WWW::Namecheap::DNS object utilizing 
+this API object.  Always returns the same object within a given session via
+internal caching.
+
+=cut
+
+sub dns {
+    my $self = shift;
+    
+    if ($self->{_dns}) {
+        return $self->{_dns};
+    }
+    
+    return $self->{_dns} = WWW::Namecheap::DNS->new(API => $self);
 }
 
 sub _argparse {
