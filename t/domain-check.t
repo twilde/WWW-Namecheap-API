@@ -15,10 +15,8 @@ isa_ok($api, 'WWW::Namecheap::API');
 my $expected_result = {
     'example.com' => 0,
     'asdfaskqwjqkfjaslfkeia.com' => 1,
-    'krellis.org' => 1,
-    'team-cymru.com' => 1,
     'thisisalongbadfaketestdomain.com' => 1,
-#    'apigetcontact.net' => 0,
+    'wwwnamecheapapi50602.com' => 0,
 };
 
-is_deeply($api->domain->check(domains => [keys %$expected_result]), $expected_result);
+is_deeply($api->domain->check(Domains => [keys %$expected_result]), $expected_result);

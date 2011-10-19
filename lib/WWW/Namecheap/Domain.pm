@@ -62,7 +62,7 @@ sub check {
     
     my $params = _argparse(@_);
     
-    my %domains = map { $_ => -1 } @{$params->{'domains'}};
+    my %domains = map { $_ => -1 } @{$params->{'Domains'}};
     my $DomainList = join(',', keys %domains);
     my $xml = $self->api->request(
         Command => 'namecheap.domains.check',
