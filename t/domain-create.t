@@ -37,9 +37,12 @@ like($result->{OrderID}, qr/^\d+$/);
 like($result->{TransactionID}, qr/^\d+$/);
 like($result->{ChargedAmount}, qr/^\d+[.]\d+$/);
 
-my $tests = 7;
-
 my $contacts = $api->domain->getcontacts(DomainName => $create{DomainName});
+is($contacts->{Domain}, $create{DomainName});
+is($contacts->{domainnameid}, $result->{DomainID});
+
+my $tests = 9;
+
 foreach my $key (keys %{$create{Registrant}}) {
     if ($key eq 'StateProvince') {
         is($contacts->{Registrant}->{StateProvinceChoice}, $create{Registrant}->{$key});
