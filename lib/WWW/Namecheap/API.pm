@@ -31,18 +31,83 @@ our %APIURL = (
 
 =head1 SYNOPSIS
 
-Perl interface to the Namecheap API.  Yeah, use it.
+Perl interface to the Namecheap API.  API details at:
 
-Perhaps a little code snippet.
+    https://www.namecheap.com/support/api/api.aspx
+
+Actual API calls happen in the other modules in the distribution, which
+can be accessed via convenience methods from an API object.  Brief
+example:
 
     use WWW::Namecheap::API;
+    
+    my $api = WWW::Namecheap::API->new(
+        System => 'test',
+        ApiUser => 'wwwnamecheapapi',
+        ApiKey => 'keyhere',
+        DefaultIp => '1.2.3.4',
+    );
+    
+    my $result = $api->domain->check(Domains => ['example.com']);
+    
+    if ($result->{'example.com'}) {
+        $api->domain->create(
+            DomainName => 'example.com',
+            Years => 1,
+            Registrant => {
+                OrganizationName => 'Foo Bar Inc.',
+                FirstName => 'Joe',
+                LastName => 'Manager',
+                Address1 => '123 Fake Street',
+                City => 'Univille',
+                StateProvince => 'SD',
+                PostalCode => '12345',
+                Country => 'US',
+                Phone => '+1.2125551212',
+                EmailAddress => 'joe@example.com',
+            },
+        );
+    }
 
-    my $foo = WWW::Namecheap::API->new();
-    ...
+=head1 GLOBAL PARAMETERS
+
+There are a few parameters that can be included in any of the individual
+methods within the Namecheap API modules.  These are listed below.
+
+=head2 ClientIp
+
+The client IP address for which this request is effective.  If a DefaultIp
+was not provided when setting up the parent API object, this parameter
+is required, otherwise it is optional.
+
+=head2 UserName
+
+A sub-user (see L<WWW::Namecheap::User>) under which the command should
+be performed.  A DefaultUser may be specified at API object creation
+time; if one is not specified there, the default is to use the ApiUser
+unless a UserName is provided for the specific command being issued.
 
 =head1 SUBROUTINES/METHODS
 
-=head2 new
+=head2 WWW::Namecheap::API->new(%hash)
+
+Instantiate a new API object.  Example:
+
+    my $api = WWW::Namecheap::API->new(
+        System  => 'test', # or 'prod' for production, default test
+        ApiUser => 'username',
+        ApiKey  => 'apikey',
+        DefaultIp   => '1.2.3.4', # optional
+        DefaultUser => 'otheruser', #optional, default ApiUser
+        ApiUrl => 'https://foo.bar/', # overrides URL chosen by System
+        Agent  => 'My API Agent/1.0', # optional, overrides default UA
+    );
+
+Only ApiUser and ApiKey are required, in which case System will default
+to 'test' and Agent defaults to 'WWW::Namecheap::API/$VERSION'.  This
+API object will be passed to the constructors of the other classes in
+the distribution (or you can use its built-in convenience methods to
+get objects of those classes directly).
 
 =cut
 
@@ -82,15 +147,29 @@ sub new {
     return bless($self, $class);
 }
 
-=head2 $api->request
+=head2 $api->request(%hash)
 
-Send a request to the Namecheap API.
+Send a request to the Namecheap API.  Returns the XML response parsed into
+Perl form by XML::Simple.  Intended for use by sub-classes, not outside
+calls.  Parameters should be of the type and quantity required by the
+Namecheap API for the given Command.  Example:
+
+    my $xml = $api->request(
+        Command => 'namecheap.domains.check',
+        DomainList => 'example.com,example2.net',
+        ClientIp => '1.2.3.4', # required if no DefaultIp in $api
+    );
 
 =cut
 
 sub request {
     my $self = shift;
     my %reqparams = @_;
+    
+    unless ($reqparams{'Command'}) {
+        Carp::carp("No command specified, bailing!");
+        return;
+    }
     
     my $clientip = delete($reqparams{'ClientIp'}) || $self->{'DefaultIp'};
     unless ($clientip) {
@@ -117,7 +196,7 @@ sub request {
     return XMLin($response->content);
 }
 
-=head2 $api->domain
+=head2 $api->domain()
 
 Helper method to create and return a WWW::Namecheap::Domain object utilizing
 this API object.  Always returns the same object within a given session via
@@ -135,7 +214,7 @@ sub domain {
     return $self->{_domain} = WWW::Namecheap::Domain->new(API => $self);
 }
 
-=head2 $api->dns
+=head2 $api->dns()
 
 Helper method to create and return a WWW::Namecheap::DNS object utilizing 
 this API object.  Always returns the same object within a given session via

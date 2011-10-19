@@ -5,6 +5,12 @@ WWW::Namecheap::API provides an object-oriented interface to the
 namecheap.com domain registration / DNS API.  Details of the API can be
 found at https://www.namecheap.com/support/api/api.aspx
 
+NOTE: This distribution is still a work in progress and does not yet
+implement the full API.  Contributions are welcome, you can find the
+master repository on GitHub:
+
+    https://github.com/twilde/WWW-Namecheap-API
+
 INSTALLATION
 
 To install this module, run the following commands:
@@ -13,6 +19,16 @@ To install this module, run the following commands:
 	./Build
 	./Build test
 	./Build install
+
+Most of the tests run by the module require an active API account on
+the Namecheap test site.  They will not run unless API credentials are
+specified in the environment.  Specifically, you should define:
+
+TEST_APIUSER=username
+TEST_APIKEY=key
+TEST_APIIP=default IP
+
+in your shell before running ./Build test if you wish to run these tests.
 
 SUPPORT AND DOCUMENTATION
 

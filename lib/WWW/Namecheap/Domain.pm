@@ -22,16 +22,21 @@ our $VERSION = '0.01';
 
 Namecheap API domain methods.
 
-Perhaps a little code snippet.
+See L<WWW::Namecheap::API> for main documentation.
 
     use WWW::Namecheap::Domain;
 
-    my $foo = WWW::Namecheap::Domain->new();
+    my $domain = WWW::Namecheap::Domain->new(API => $api);
+    $domain->check(...);
+    $domain->create(...);
     ...
 
 =head1 SUBROUTINES/METHODS
 
-=head2 new
+=head2 WWW::Namecheap::Domain->new(API => $api)
+
+Instantiate a new Domain object for making domain-related API calls.
+Requires a WWW::Namecheap::API object.
 
 =cut
 
@@ -51,9 +56,24 @@ sub new {
     return bless($self, $class);
 }
 
-=head2 $domain->check
+=head2 $domain->check(Domains => ['example.com'])
 
-Check a list of domains.
+Check a list of domains.  Returns a hashref of availablity status with
+domain names as the keys and 0/1 as the values for not available/available.
+
+    my $result = $domain->check(Domains => [qw(
+        example.com
+        example2.com
+        foobar.com
+    )]);
+    
+Will give a $result something like:
+
+    $result = {
+        'example.com' => 0,  # example.com is taken
+        'example2.com' => 1, # example2.com is available
+        'foobar.com' => 0,   # damn, foobar.com is taken
+    };
 
 =cut
 
@@ -91,11 +111,13 @@ sub check {
     return \%domains;
 }
 
-=head2 $domain->create
+=head2 $domain->create(%hash)
+
+Register a new domain name.
 
 Example:
 
-  $domain->create(
+  my $result = $domain->create(
       UserName => 'username', # optional if DefaultUser specified in $api
       ClientIp => '1.2.3.4', # optional if DefaultIp specified in $api
       DomainName => 'example.com',
@@ -132,6 +154,17 @@ Example:
 Unspecified contacts will be automatically copied from the registrant, which
 must be provided.
 
+Returns:
+
+    $result = {
+        Domain => 'example.com',
+        DomainID => '12345',
+        Registered => 'true',
+        OrderID => '12345',
+        TransactionID => '12345',
+        ChargedAmount => '10.45', # dollars and cents
+    };
+
 =cut
 
 sub create {
@@ -165,10 +198,33 @@ sub create {
     return $xml->{CommandResponse}->{DomainCreateResult};
 }
 
-=head2 $domain->list
+=head2 $domain->list(%hash)
 
-Get a list of domains.  Automatically "pages" through for you because it's
-awesome like that.
+Get a list of domains in your account.  Automatically handles the Namecheap
+"paging" to get a full list.  May be optionally restricted:
+
+    my $domains = $domain->list(
+        ListType => 'ALL', # or EXPIRING or EXPIRED
+        SearchTerm => 'foo', # keyword search
+        SortBy => 'NAME', # or EXPIREDATE, CREATEDATE, or *_DESC
+    );
+
+Returns an arrayref of hashrefs:
+
+    $domains = [
+        {
+            ID => '123',
+            Name => 'example.com',
+            User => 'owner',
+            Created => 'MM/DD/YYYY',
+            Expires => 'MM/DD/YYYY',
+            IsExpired => 'false',
+            IsLocked => 'true',
+            AutoRenew => 'false',
+            WhoisGuard => 'ENABLED',
+        },
+        ...
+    ];
 
 =cut
 
@@ -211,7 +267,32 @@ sub list {
     return \@domains;
 }
 
-=head2 $domain->getcontacts
+=head2 $domain->getcontacts(DomainName => 'example.com')
+
+Get the contacts on file for the provided DomainName.  Returns a big
+ol' data structure:
+
+    $contacts = {
+        Domain => 'example.com',
+        domainnameid => '12345',
+        Registrant => {
+            ReadOnly => 'false',
+            ... all contact fields from create ...
+        },
+        Tech => {
+            ... ditto ...
+        },
+        Admin => {
+            ... ditto ...
+        },
+        AuxBilling => {
+            ... ditto ...
+        },
+        WhoisGuardContact => {
+            ... same contacts as outside, except the actual published
+                WhoisGuard info, ReadOnly => 'true' ...
+        },
+    };
 
 =cut
 
@@ -237,7 +318,11 @@ sub getcontacts {
     return $xml->{CommandResponse}->{DomainContactsResult};
 }
 
-=head2 $domain->gettldlist
+=head2 $domain->gettldlist()
+
+Get a list of all TLDs available for registration, along with various
+attributes for each TLD.  Results are automatically cached for one
+hour to avoid excessive API load.
 
 =cut
 
@@ -260,7 +345,31 @@ sub gettldlist {
     return $self->{_tldlist_cache};
 }
 
-=head2 $domain->transfer
+=head2 $domain->transfer(%hash)
+
+Initiate a transfer in request to Namecheap from another registrar.
+Request should look something like:
+
+    my $transfer = $domain->transfer(
+        DomainName => 'example.com',
+        Years => 1,
+        EPPCode => 'foobarbaz',
+    );
+
+The response will be a hashref:
+
+    $transfer = {
+        Transfer => 'true',
+        TransferID => '15',
+        StatusID => '-1',
+        OrderID => '1234',
+        TransactionID => '1234',
+        ChargedAmount => '10.10',
+    };
+
+For transfer status code details, see the Namecheap API documentation:
+
+L<https://www.namecheap.com/support/api/domains-transfer/transfer-statuses.aspx>
 
 =cut
 
@@ -284,7 +393,17 @@ sub transfer {
     return $xml->{CommandResponse}->{DomainTransferCreateResult};
 }
 
-=head2 $domain->transferstatus
+=head2 $domain->transferstatus(TransferID => '1234')
+
+Check the current status of a particular transfer.  The TransferID
+is the TransferID returned by the transfer() call, or included in
+the transferlist().  Returns a hashref:
+
+    $result = {
+        TransferID => '1234',
+        Status => 'String',
+        StatusID => '-1',
+    };
 
 =cut
 
@@ -308,7 +427,34 @@ sub transferstatus {
     return $xml->{CommandResponse}->{DomainTransferGetStatusResult};
 }
 
-=head2 $domain->transferlist
+=head2 $domain->transferlist()
+
+Retrieve a list of transfers associated with the connected API account.
+Automatically handles the Namecheap "paging" to get a full list.  May
+be optionally restricted:
+
+    my $transfers = $domain->transferlist(
+        ListType => 'ALL', # or INPROGRESS, CANCELLED, COMPLETED
+        SearchTerm => 'foo', # keyword search
+        SortBy => 'DOMAINNAME', # or TRANSFERDATE, STATUSDATE, *_DESC
+    );
+
+Returns an arrayref of hashrefs:
+
+    $domains = [
+        {
+            ID => '123',
+            Domainname => 'example.com',
+            User => 'apiuser',
+            TransferDate => 'MM/DD/YYYY',
+            OrderID => 12345,
+            StatusID => 20
+            Status => 'Cancelled',
+            StatusDate => 'MM/DD/YYYY',
+            StatusDescription => 'String',
+        }
+        ...
+    ];
 
 =cut
 

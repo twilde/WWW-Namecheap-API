@@ -22,16 +22,20 @@ our $VERSION = '0.01';
 
 Namecheap API DNS methods.
 
-Perhaps a little code snippet.
+See L<WWW::Namecheap::API> for main documentation.
 
     use WWW::Namecheap::DNS;
 
-    my $foo = WWW::Namecheap::DNS->new();
+    my $dns = WWW::Namecheap::DNS->new(API => $api);
+    $dns->sethosts(...);
     ...
 
 =head1 SUBROUTINES/METHODS
 
-=head2 new
+=head2 WWW::Namecheap::Domain->new(API => $api)
+
+Instantiate a new DNS object for making DNS-related API calls. 
+Requires a WWW::Namecheap::API object.
 
 =cut
 
@@ -51,9 +55,12 @@ sub new {
     return bless($self, $class);
 }
 
-=head2 $dns->setnameservers
+=head2 $dns->setnameservers(%hash)
 
-    $dns->setnameservers(
+Set the nameservers used by a domain under your management.  They may
+be set to custom nameservers or the Namecheap default nameservers.
+
+    my $result = $dns->setnameservers(
         DomainName => 'example.com',
         Nameservers => [
             'ns1.example.com',
@@ -61,13 +68,21 @@ sub new {
         ],
         DefaultNS => 0,
     );
-    
-    or
-    
-    $dns->setnameservers(
+
+or, for the Namecheap default:
+
+    my $result = $dns->setnameservers(
         DomainName => 'example.com',
         DefaultNS => 1,
     );
+
+$result is a small hashref confirming back the domain that was modified 
+and whether the operation was successful or not:
+
+    $result = {
+        Domain => 'example.com',
+        Update => 'true',
+    };
 
 =cut
 
@@ -108,7 +123,19 @@ sub setnameservers {
     }
 }
 
-=head2 $dns->getnameservers
+=head2 $dns->getnameservers(DomainName => 'example.com')
+
+Get a list of nameservers currently associated with a domain under
+your management.  Returns a data structure that looks like this:
+
+    $nameservers = {
+        Domain => 'example.com',
+        IsUsingOurDNS => 'true', # if using the "default NS" option
+        Nameserver => [
+            'ns1.example.com',
+            'ns2.example.com',
+        ],
+    };
 
 =cut
 
@@ -139,7 +166,28 @@ sub getnameservers {
     return $xml->{CommandResponse}->{DomainDNSGetListResult};
 }
 
-=head2 $dns->gethosts
+=head2 $dns->gethosts(DomainName => 'example.com')
+
+Get a list of DNS hosts for a domain name under management and using the
+Namecheap provided DNS service.  Returns a data structure as follows:
+
+    $hosts = {
+        Domain => 'example.com',
+        IsUsingOurDNS => 'true',
+        Host => [
+            {
+                HostId => '10',
+                Name => '@',
+                Type => 'A',
+                Address => '1.2.3.4',
+                MXPref => 10, # yes, even for non-MX records
+            },
+            ...
+        ],
+    };
+
+See the documentation for the sethosts() method for more details of the
+possible values of each of these fields.
 
 =cut
 
@@ -180,7 +228,7 @@ domain configuration will be deleted.  You can simply modify the arrayref
 you get back from gethosts and pass it back in, we'll even strip out the
 HostIds for you!  :)
 
-    $dns->sethosts(
+    my $result = $dns->sethosts(
         DomainName => 'example.com',
         Hosts => [
             {
@@ -198,6 +246,31 @@ HostIds for you!  :)
         ],
         EmailType => 'MX', # or 'MXE' or 'FWD'
     );
+
+Results in a not very useful response:
+
+    $result = {
+        Domain => 'example.com',
+        IsSuccess => 'true', # or false
+    };
+
+Further verification can be performed using a subsequent gethosts() call.
+
+Possible values for "Type" are listed below.  All relevant data (including
+URLs for the URL, URL301, and FRAME types) goes into the "Address" field.
+
+ * A
+ * AAAA
+ * CNAME
+ * MX
+ * MXE
+ * TXT
+ * URL
+ * URL301
+ * FRAME
+
+Type=MXE expects an IP address and synthesizes appropriate MX and host
+records.
 
 =cut
 
