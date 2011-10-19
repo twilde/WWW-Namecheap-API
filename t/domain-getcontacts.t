@@ -3,11 +3,13 @@
 use Test::More;
 use WWW::Namecheap::API;
 
+plan skip_all => "No API credentials defined" unless $ENV{TEST_APIUSER};
+
 my $api = WWW::Namecheap::API->new(
     System => 'test',
-    ApiUser => 'wwwnamecheapapi',
-    ApiKey => '384bac5cb5784231b3b43e3f4fd31e2e',
-    DefaultIp => '108.4.146.235',
+    ApiUser => $ENV{TEST_APIUSER},
+    ApiKey => $ENV{TEST_APIKEY},
+    DefaultIp => $ENV{TEST_APIIP} || '127.0.0.1',
 );
 
 isa_ok($api, 'WWW::Namecheap::API');

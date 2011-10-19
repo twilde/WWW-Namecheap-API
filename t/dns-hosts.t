@@ -4,11 +4,13 @@ use Test::More;
 use Test::Deep;
 use WWW::Namecheap::API;
 
+plan skip_all => "No API credentials defined" unless $ENV{TEST_APIUSER};
+
 my $api = WWW::Namecheap::API->new(
     System => 'test',
-    ApiUser => 'wwwnamecheapapi',
-    ApiKey => '384bac5cb5784231b3b43e3f4fd31e2e',
-    DefaultIp => '108.4.146.235',
+    ApiUser => $ENV{TEST_APIUSER},
+    ApiKey => $ENV{TEST_APIKEY},
+    DefaultIp => $ENV{TEST_APIIP} || '127.0.0.1',
 );
 
 isa_ok($api, 'WWW::Namecheap::API');
@@ -107,12 +109,10 @@ foreach my $scenario (@scenarios) {
     is($getresult->{Domain}, $scenario->{DomainName});
     is($getresult->{IsUsingOurDNS}, 'true');
     
-    #use Data::Dumper;
-    #print STDERR Data::Dumper::Dumper \$getresult;
-    
     # Need to build a hash of names and data from each side of the
     # result, then compare the two sides.
-    cmp_deeply($getresult->{host}, bag(map { superhashof($_) } @{$scenario->{Hosts}}));
+    cmp_deeply($getresult->{host}, bag(map { superhashof($_) } @{$scenario->{Hosts}}))
+        || diag explain $getresult;
     
     # Reset to a clean slate so our next test run has something to change
     my $cleanresult = $api->dns->sethosts(DomainName => $scenario->{DomainName}, %cleanslate);
