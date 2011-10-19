@@ -139,6 +139,109 @@ sub getnameservers {
     return $xml->{CommandResponse}->{DomainDNSGetListResult};
 }
 
+=head2 $dns->gethosts
+
+=cut
+
+sub gethosts {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    return unless $params->{DomainName};
+    
+    my %request = (
+        Command => 'namecheap.domains.dns.getHosts',
+        ClientIp => $params->{'ClientIp'},
+        UserName => $params->{'UserName'},
+    );
+    
+    my ($sld, $tld) = split(/[.]/, $params->{DomainName}, 2);
+    $request{SLD} = $sld;
+    $request{TLD} = $tld;
+    
+    my $xml = $self->api->request(%request);
+    
+    if ($xml->{Status} eq 'ERROR') {
+        print STDERR Data::Dumper::Dumper \$xml;
+        return;
+    }
+    
+    return $xml->{CommandResponse}->{DomainDNSGetHostsResult};
+}
+
+=head2 $dns->sethosts
+
+Set DNS hosts for a domain.
+
+IMPORTANT NOTE: You must include all hosts for the domain in your sethosts
+command, any hosts not present in the command but previously present in the
+domain configuration will be deleted.  You can simply modify the arrayref
+you get back from gethosts and pass it back in, we'll even strip out the
+HostIds for you!  :)
+
+    $dns->sethosts(
+        DomainName => 'example.com',
+        Hosts => [
+            {
+                Name => 'foo', # do not include domain name
+                Type => 'A',
+                Address => '1.2.3.4',
+                TTL => 1800, # optional, default 1800
+            },
+            {
+                Name => '@', # for example.com itself
+                Type => 'MX',
+                Address => 'mail.example.com',
+                MXPref => 10,
+            },
+        ],
+        EmailType => 'MX', # or 'MXE' or 'FWD'
+    );
+
+=cut
+
+sub sethosts {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    return unless $params->{DomainName};
+    
+    my %request = (
+        Command => 'namecheap.domains.dns.setHosts',
+        ClientIp => $params->{'ClientIp'},
+        UserName => $params->{'UserName'},
+        EmailType => $params->{'EmailType'},
+    );
+    
+    my ($sld, $tld) = split(/[.]/, $params->{DomainName}, 2);
+    $request{SLD} = $sld;
+    $request{TLD} = $tld;
+    
+    my $hostcount = 1;
+    foreach my $host (@{$params->{Hosts}}) {
+        next unless ($host->{Name} && $host->{Type} && $host->{Address});
+        $host->{Name} =~ s/[.]$params->{DomainName}\.?$//;
+        $host->{Name} =~ s/^$params->{DomainName}\.?$/\@/;
+        $request{"HostName$hostcount"} = $host->{Name};
+        $request{"RecordType$hostcount"} = $host->{Type};
+        $request{"Address$hostcount"} = $host->{Address};
+        $request{"MXPref$hostcount"} = $host->{MXPref} || 10;
+        $request{"TTL$hostcount"} = $host->{TTL};
+        $hostcount++;
+    }
+    
+    my $xml = $self->api->request(%request);
+    
+    if ($xml->{Status} eq 'ERROR') {
+        print STDERR Data::Dumper::Dumper \$xml;
+        return;
+    }
+    
+    return $xml->{CommandResponse}->{DomainDNSSetHostsResult};
+}
+
 =head2 $dns->api()
 
 Accessor for internal API object.

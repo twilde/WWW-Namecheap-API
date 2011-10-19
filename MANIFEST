@@ -13,6 +13,7 @@ META.yml
 README
 t/00-load.t
 t/api.t
+t/dns-hosts.t
 t/dns-nameservers.t
 t/domain-check.t
 t/domain-create.t
