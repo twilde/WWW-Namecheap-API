@@ -13,7 +13,8 @@ WriteMakefile
                    'LWP::UserAgent' => 0,
                    'URI::Escape' => 0,
                    'LWP::Protocol::https' => 0,
-                   'XML::Simple' => 0
+                   'XML::Simple' => 0,
+                   'Test::Deep' => 0
                  }
 )
 ;

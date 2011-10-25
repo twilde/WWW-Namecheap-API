@@ -16,6 +16,7 @@
    "prereqs" : {
       "build" : {
          "requires" : {
+            "Test::Deep" : 0,
             "Test::More" : 0
          }
       },
@@ -37,6 +38,26 @@
    "provides" : {
       "WWW::Namecheap::API" : {
          "file" : "lib/WWW/Namecheap/API.pm",
+         "version" : "0.01"
+      },
+      "WWW::Namecheap::DNS" : {
+         "file" : "lib/WWW/Namecheap/DNS.pm",
+         "version" : "0.01"
+      },
+      "WWW::Namecheap::Domain" : {
+         "file" : "lib/WWW/Namecheap/Domain.pm",
+         "version" : "0.01"
+      },
+      "WWW::Namecheap::NS" : {
+         "file" : "lib/WWW/Namecheap/NS.pm",
+         "version" : "0.01"
+      },
+      "WWW::Namecheap::SSL" : {
+         "file" : "lib/WWW/Namecheap/SSL.pm",
+         "version" : "0.01"
+      },
+      "WWW::Namecheap::User" : {
+         "file" : "lib/WWW/Namecheap/User.pm",
          "version" : "0.01"
       }
    },
