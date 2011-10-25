@@ -109,8 +109,7 @@ foreach my $scenario (@scenarios) {
     is($getresult->{Domain}, $scenario->{DomainName});
     is($getresult->{IsUsingOurDNS}, 'true');
     
-    # Need to build a hash of names and data from each side of the
-    # result, then compare the two sides.
+    # Deep bag comparison of results
     cmp_deeply($getresult->{host}, bag(map { superhashof($_) } @{$scenario->{Hosts}}))
         || diag explain $getresult;
     

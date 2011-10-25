@@ -38,7 +38,7 @@
    "provides" : {
       "WWW::Namecheap::API" : {
          "file" : "lib/WWW/Namecheap/API.pm",
-         "version" : "0.01"
+         "version" : "0.02"
       },
       "WWW::Namecheap::DNS" : {
          "file" : "lib/WWW/Namecheap/DNS.pm",
@@ -46,7 +46,7 @@
       },
       "WWW::Namecheap::Domain" : {
          "file" : "lib/WWW/Namecheap/Domain.pm",
-         "version" : "0.01"
+         "version" : "0.02"
       },
       "WWW::Namecheap::NS" : {
          "file" : "lib/WWW/Namecheap/NS.pm",
@@ -67,5 +67,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.01"
+   "version" : "0.02"
 }

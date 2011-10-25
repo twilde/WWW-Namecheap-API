@@ -12,11 +12,11 @@ WWW::Namecheap::Domain - Namecheap API domain methods
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -316,6 +316,84 @@ sub getcontacts {
     }
     
     return $xml->{CommandResponse}->{DomainContactsResult};
+}
+
+=head2 $domain->setcontacts(%hash)
+
+Set contacts for a domain name.
+
+Example:
+
+  my $result = $domain->create(
+      UserName => 'username', # optional if DefaultUser specified in $api
+      ClientIp => '1.2.3.4', # optional if DefaultIp specified in $api
+      DomainName => 'example.com',
+      Registrant => {
+          OrganizationName => 'Example Dot Com', # optional
+          FirstName => 'Domain',
+          LastName => 'Manager',
+          Address1 => '123 Fake Street',
+          Address2 => 'Suite 555', # optional
+          City => 'Univille',
+          StateProvince => 'SD',
+          StateProvinceChoice => 'S', # for 'State' or 'P' for 'Province'
+          PostalCode => '12345',
+          Country => 'USA',
+          Phone => '+1.2025551212',
+          Fax => '+1.2025551212', # optional
+          EmailAddress => 'foo@example.com',
+      },
+      Tech => {
+          # same fields as Registrant
+      },
+      Admin => {
+          # same fields as Registrant
+      },
+      AuxBilling => {
+          # same fields as Registrant
+      },
+  );
+
+Unspecified contacts will be automatically copied from the registrant, which
+must be provided.
+
+$result is a small hashref confirming back the domain that was modified 
+and whether the operation was successful or not:
+
+    $result = {
+        Domain => 'example.com',
+        IsSuccess => 'true',
+    };
+
+=cut
+
+sub setcontacts {
+    my $self = shift;
+    
+    my $params = _argparse(@_);
+    
+    return unless $params->{'DomainName'};
+    
+    my %request = (
+        Command => 'namecheap.domains.setContacts',
+        ClientIp => $params->{'ClientIp'},
+        UserName => $params->{'UserName'},
+        DomainName => $params->{'DomainName'},
+    );
+    
+    foreach my $contact (qw(Registrant Tech Admin AuxBilling)) {
+        $params->{$contact} ||= $params->{Registrant};
+        map { $request{"$contact$_"} = $params->{$contact}{$_} } keys %{$params->{$contact}};
+    }
+    
+    my $xml = $self->api->request(%request);
+
+    if ($xml->{Status} eq 'ERROR') {
+        print STDERR Data::Dumper::Dumper \$xml;
+        return;
+    }
+    
+    return $xml->{CommandResponse}->{DomainSetContactResult};
 }
 
 =head2 $domain->gettldlist()

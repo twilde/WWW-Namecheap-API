@@ -16,8 +16,8 @@ t/api.t
 t/dns-hosts.t
 t/dns-nameservers.t
 t/domain-check.t
+t/domain-contacts.t
 t/domain-create.t
-t/domain-getcontacts.t
 t/domain-gettldlist.t
 t/domain-list.t
 t/domain-transfer.t
