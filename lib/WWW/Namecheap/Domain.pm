@@ -132,7 +132,7 @@ Example:
           StateProvince => 'SD',
           StateProvinceChoice => 'S', # for 'State' or 'P' for 'Province'
           PostalCode => '12345',
-          Country => 'USA',
+          Country => 'US',
           Phone => '+1.2025551212',
           Fax => '+1.2025551212', # optional
           EmailAddress => 'foo@example.com',
