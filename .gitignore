@@ -11,4 +11,5 @@ cover_db
 pod2htm*.tmp
 WWW-Namecheap-API-*
 MYMETA.*
+META.*
 testsetup.sh
