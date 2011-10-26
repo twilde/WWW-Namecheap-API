@@ -16,10 +16,12 @@ isa_ok($api, 'WWW::Namecheap::API');
 
 my $domains = $api->domain->list;
 isa_ok($domains, 'ARRAY');
+my $onedomain = $api->domain->list(SearchTerm => 'wwwnamecheapapi38449.com');
+isa_ok($onedomain, 'ARRAY');
 
-my $tests = 2;
+my $tests = 3;
 
-foreach my $dom (@$domains) {
+foreach my $dom (@$domains, @$onedomain) {
     like($dom->{ID}, qr/^\d+$/);
     like($dom->{Name}, qr/^[\w.-]+$/);
     is($dom->{User}, 'wwwnamecheapapi');

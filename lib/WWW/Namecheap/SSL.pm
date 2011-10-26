@@ -10,13 +10,9 @@ use Data::Dumper();
 
 WWW::Namecheap::SSL - Namecheap API SSL methods
 
-=head1 VERSION
-
-Version 0.01
-
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 

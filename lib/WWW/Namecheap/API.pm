@@ -17,13 +17,9 @@ use WWW::Namecheap::DNS ();
 
 WWW::Namecheap::API - Perl interface to the Namecheap API
 
-=head1 VERSION
-
-Version 0.02
-
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 our %APIURL = (
     prod => 'https://api.namecheap.com/xml.response',
     test => 'https://api.sandbox.namecheap.com/xml.response',

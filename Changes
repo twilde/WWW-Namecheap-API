@@ -3,3 +3,11 @@ Revision history for WWW-Namecheap-API
 0.01    19 OCT 2011
         First release, incomplete API implementation, but getting it
         out there.
+
+0.02	25 OCT 2011
+	* Add $domain->setcontacts method to WWW::Namecheap::Domain
+	* Update domain contact tests to match
+
+0.03	26 OCT 2011
+	* Fix bug when a single domain is returned from a list/search
+	  operation.
