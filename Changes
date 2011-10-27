@@ -11,3 +11,9 @@ Revision history for WWW-Namecheap-API
 0.03	26 OCT 2011
 	* Fix bug when a single domain is returned from a list/search
 	  operation.
+
+0.04	27 OCT 2011
+	* Fix inconsistent capitalization of "Host" returned from API
+	  in $dns->gethosts()
+	* Consistent $dns->gethosts() arrayref return even when only
+	  a single host is returned.

@@ -95,9 +95,17 @@ my @scenarios = (
             },
         ],
     },
-#    {
-#        DomainName => 'wwwnamecheapapi38381.com',
-#    },
+    {
+        DomainName => 'wwwnamecheapapi38381.com',
+        EmailType => 'FWD',
+        Hosts => [
+            {
+                Name => '@',
+                Type => 'A',
+                Address => '127.0.0.1',
+            },
+        ],
+    },
 );
 
 foreach my $scenario (@scenarios) {
@@ -110,7 +118,7 @@ foreach my $scenario (@scenarios) {
     is($getresult->{IsUsingOurDNS}, 'true');
     
     # Deep bag comparison of results
-    cmp_deeply($getresult->{host}, bag(map { superhashof($_) } @{$scenario->{Hosts}}))
+    cmp_deeply($getresult->{Host}, bag(map { superhashof($_) } @{$scenario->{Hosts}}))
         || diag explain $getresult;
     
     # Reset to a clean slate so our next test run has something to change

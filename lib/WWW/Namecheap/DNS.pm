@@ -12,7 +12,7 @@ WWW::Namecheap::DNS - Namecheap API DNS methods
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 
@@ -209,6 +209,15 @@ sub gethosts {
     if ($xml->{Status} eq 'ERROR') {
         print STDERR Data::Dumper::Dumper \$xml;
         return;
+    }
+    unless ($xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host}) {
+        $xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host} = $xml->{CommandResponse}->{DomainDNSGetHostsResult}->{host};
+    }
+    
+    if ($xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host} &&
+        ref($xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host}) eq 'HASH') {
+        my $arrayref = [ $xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host} ];
+        $xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host} = $arrayref;
     }
     
     return $xml->{CommandResponse}->{DomainDNSGetHostsResult};
