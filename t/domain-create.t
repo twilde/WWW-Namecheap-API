@@ -46,17 +46,10 @@ is($contacts->{domainnameid}, $result->{DomainID});
 my $tests = 9;
 
 foreach my $key (keys %{$create{Registrant}}) {
-    if ($key eq 'StateProvince') {
-        is($contacts->{Registrant}->{StateProvinceChoice}, $create{Registrant}->{$key});
-        is($contacts->{Tech}->{StateProvinceChoice}, $create{Registrant}->{$key});
-        is($contacts->{Admin}->{StateProvinceChoice}, $create{Registrant}->{$key});
-        is($contacts->{AuxBilling}->{StateProvinceChoice}, $create{Registrant}->{$key});
-    } else {
-        is($contacts->{Registrant}->{$key}, $create{Registrant}->{$key});
-        is($contacts->{Tech}->{$key}, $create{Registrant}->{$key});
-        is($contacts->{Admin}->{$key}, $create{Registrant}->{$key});
-        is($contacts->{AuxBilling}->{$key}, $create{Registrant}->{$key});
-    }
+    is($contacts->{Registrant}->{$key}, $create{Registrant}->{$key});
+    is($contacts->{Tech}->{$key}, $create{Registrant}->{$key});
+    is($contacts->{Admin}->{$key}, $create{Registrant}->{$key});
+    is($contacts->{AuxBilling}->{$key}, $create{Registrant}->{$key});
     $tests += 4;
 }
 
