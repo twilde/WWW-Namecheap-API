@@ -17,6 +17,7 @@ my $api = WWW::Namecheap::API->new(
 isa_ok($api, 'WWW::Namecheap::API');
 
 my $tlds = $api->domain->gettldlist;
+
 isa_ok($tlds, 'ARRAY');
 
 my $expected = [
@@ -224,7 +225,7 @@ my $expected = [
       'content' => 'US Commercial',
       'MaxTransferYears' => '10',
       'IsDisableWGAllot' => 'false',
-      'IsSupportsIDN' => 'false',
+      'IsSupportsIDN' => 'true',
       'MaxRenewYears' => '10',
       'IsIncludeInExtendedSearchOnly' => 'false',
       'Type' => 'GTLD',
@@ -422,7 +423,7 @@ my $expected = [
       'content' => 'US Network',
       'MaxTransferYears' => '10',
       'IsDisableWGAllot' => 'false',
-      'IsSupportsIDN' => 'false',
+      'IsSupportsIDN' => 'true',
       'MaxRenewYears' => '10',
       'IsIncludeInExtendedSearchOnly' => 'false',
       'Type' => 'GTLD',
