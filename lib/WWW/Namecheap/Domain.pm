@@ -4,7 +4,6 @@ use 5.006;
 use strict;
 use warnings;
 use Carp();
-use Data::Dumper();
 
 =head1 NAME
 
@@ -12,7 +11,7 @@ WWW::Namecheap::Domain - Namecheap API domain methods
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
@@ -87,10 +86,7 @@ sub check {
         DomainList => $DomainList,
     );
     
-    if ($xml->{Status} eq 'ERROR') {
-        print STDERR Data::Dumper::Dumper \$xml;
-        return;
-    }
+    return unless $xml;
     
     foreach my $entry (@{$xml->{CommandResponse}->{DomainCheckResult}}) {
         unless ($domains{$entry->{Domain}}) {
@@ -185,11 +181,8 @@ sub create {
     }
     
     my $xml = $self->api->request(%request);
-
-    if ($xml->{Status} eq 'ERROR') {
-        print STDERR Data::Dumper::Dumper \$xml;
-        return;
-    }
+    
+    return unless $xml;
     
     return $xml->{CommandResponse}->{DomainCreateResult};
 }
@@ -245,10 +238,7 @@ sub list {
     while (1) {
         my $xml = $self->api->request(%request);
         
-        if ($xml->{Status} eq 'ERROR') {
-            print STDERR Data::Dumper::Dumper \$xml;
-            last;
-        }
+        last unless $xml;
         
         if (ref($xml->{CommandResponse}->{DomainGetListResult}->{Domain}) eq 'ARRAY') {
             push(@domains, @{$xml->{CommandResponse}->{DomainGetListResult}->{Domain}});
@@ -310,10 +300,7 @@ sub getcontacts {
     
     my $xml = $self->api->request(%request);
     
-    if ($xml->{Status} eq 'ERROR') {
-        print STDERR Data::Dumper::Dumper \$xml;
-        return;
-    }
+    return unless $xml;
     
     return $xml->{CommandResponse}->{DomainContactsResult};
 }
@@ -387,11 +374,8 @@ sub setcontacts {
     }
     
     my $xml = $self->api->request(%request);
-
-    if ($xml->{Status} eq 'ERROR') {
-        print STDERR Data::Dumper::Dumper \$xml;
-        return;
-    }
+    
+    return unless $xml;
     
     return $xml->{CommandResponse}->{DomainSetContactResult};
 }
@@ -463,10 +447,7 @@ sub transfer {
     
     my $xml = $self->api->request(%request);
     
-    if ($xml->{Status} eq 'ERROR') {
-        print STDERR Data::Dumper::Dumper \$xml;
-        return;
-    }
+    return unless $xml;
     
     return $xml->{CommandResponse}->{DomainTransferCreateResult};
 }
@@ -497,10 +478,7 @@ sub transferstatus {
     
     my $xml = $self->api->request(%request);
     
-    if ($xml->{Status} eq 'ERROR') {
-        print STDERR Data::Dumper::Dumper \$xml;
-        return;
-    }
+    return unless $xml;
     
     return $xml->{CommandResponse}->{DomainTransferGetStatusResult};
 }
@@ -557,12 +535,7 @@ sub transferlist {
     while (1) {
         my $xml = $self->api->request(%request);
         
-        if ($xml->{Status} eq 'ERROR') {
-            print STDERR Data::Dumper::Dumper \$xml;
-            last;
-        }
-        
-        #print STDERR Data::Dumper::Dumper \$xml;
+        last unless $xml;
         
         push(@transfers, @{$xml->{CommandResponse}->{TransferGetListResult}->{Transfer}});
         if ($xml->{CommandResponse}->{Paging}->{TotalItems} <= ($request{Page} * $request{PageSize})) {

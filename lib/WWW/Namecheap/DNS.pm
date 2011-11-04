@@ -4,7 +4,6 @@ use 5.006;
 use strict;
 use warnings;
 use Carp();
-use Data::Dumper();
 
 =head1 NAME
 
@@ -12,7 +11,7 @@ WWW::Namecheap::DNS - Namecheap API DNS methods
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
@@ -107,10 +106,7 @@ sub setnameservers {
     
     my $xml = $self->api->request(%request);
     
-    if ($xml->{Status} eq 'ERROR') {
-        print STDERR Data::Dumper::Dumper \$xml;
-        return;
-    }
+    return unless $xml;
     
     if ($params->{DefaultNS}) {
         return $xml->{CommandResponse}->{DomainDNSSetDefaultResult};
@@ -154,10 +150,7 @@ sub getnameservers {
     
     my $xml = $self->api->request(%request);
     
-    if ($xml->{Status} eq 'ERROR') {
-        print STDERR Data::Dumper::Dumper \$xml;
-        return;
-    }
+    return unless $xml;
     
     return $xml->{CommandResponse}->{DomainDNSGetListResult};
 }
@@ -206,10 +199,8 @@ sub gethosts {
     
     my $xml = $self->api->request(%request);
     
-    if ($xml->{Status} eq 'ERROR') {
-        print STDERR Data::Dumper::Dumper \$xml;
-        return;
-    }
+    return unless $xml;
+
     unless ($xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host}) {
         $xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host} = $xml->{CommandResponse}->{DomainDNSGetHostsResult}->{host};
     }
@@ -312,10 +303,7 @@ sub sethosts {
     
     my $xml = $self->api->request(%request);
     
-    if ($xml->{Status} eq 'ERROR') {
-        print STDERR Data::Dumper::Dumper \$xml;
-        return;
-    }
+    return unless $xml;
     
     return $xml->{CommandResponse}->{DomainDNSSetHostsResult};
 }

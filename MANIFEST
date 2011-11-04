@@ -21,6 +21,7 @@ t/domain-create.t
 t/domain-gettldlist.t
 t/domain-list.t
 t/domain-transfer.t
+t/error.t
 t/manifest.t
 t/pod-coverage.t
 t/pod.t

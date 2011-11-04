@@ -7,7 +7,6 @@ use Carp();
 use LWP::UserAgent ();
 use URI::Escape;
 use XML::Simple;
-use Data::Dumper ();
 
 # For convenience methods
 use WWW::Namecheap::Domain ();
@@ -19,7 +18,7 @@ WWW::Namecheap::API - Perl interface to the Namecheap API
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 our %APIURL = (
     prod => 'https://api.namecheap.com/xml.response',
     test => 'https://api.sandbox.namecheap.com/xml.response',
@@ -189,7 +188,13 @@ sub request {
         return;
     }
     
-    return XMLin($response->content);
+    my $xml = XMLin($response->content);
+    
+    if ($xml->{Status} eq 'ERROR') {
+        $self->{_error} = $xml;
+        return;
+    }
+    return $xml;
 }
 
 =head2 $api->domain()
@@ -226,6 +231,17 @@ sub dns {
     }
     
     return $self->{_dns} = WWW::Namecheap::DNS->new(API => $self);
+}
+
+=head2 $api->error()
+
+Returns the full XML response from the API if an error occurred during
+the request.  Most likely key of interest is $xml->{Errors} and below.
+
+=cut
+
+sub error {
+    return $_[0]->{_error};
 }
 
 sub _argparse {

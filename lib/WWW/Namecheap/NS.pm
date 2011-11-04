@@ -4,7 +4,6 @@ use 5.006;
 use strict;
 use warnings;
 use Carp();
-use Data::Dumper();
 
 =head1 NAME
 
@@ -12,7 +11,7 @@ WWW::Namecheap::NS - Namecheap API nameserver methods
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 

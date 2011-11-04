@@ -17,3 +17,11 @@ Revision history for WWW-Namecheap-API
 	  in $dns->gethosts()
 	* Consistent $dns->gethosts() arrayref return even when only
 	  a single host is returned.
+
+0.05	04 NOV 2011
+	* Don't output errors to STDERR; handle them at the API
+	  level.  Fixes RT #72074.
+	* Update TLD list test for TLD changes.
+	* Update transferlist test and documentation for API
+	  capitalization change.
+	* Remove StateProvince workaround from t/domain-create.t.

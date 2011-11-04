@@ -2,6 +2,7 @@
 
 use Test::More tests => 7;
 use WWW::Namecheap::API;
+use WWW::Namecheap::DNS;
 use WWW::Namecheap::Domain;
 
 my $api = WWW::Namecheap::API->new(
