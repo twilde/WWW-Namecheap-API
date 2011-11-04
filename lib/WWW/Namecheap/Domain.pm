@@ -522,7 +522,7 @@ Returns an arrayref of hashrefs:
     $domains = [
         {
             ID => '123',
-            Domainname => 'example.com',
+            DomainName => 'example.com',
             User => 'apiuser',
             TransferDate => 'MM/DD/YYYY',
             OrderID => 12345,

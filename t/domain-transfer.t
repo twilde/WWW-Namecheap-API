@@ -5,6 +5,8 @@ use WWW::Namecheap::API;
 
 plan skip_all => "No API credentials defined" unless $ENV{TEST_APIUSER};
 
+plan tests => 7;
+
 my $api = WWW::Namecheap::API->new(
     System => 'test',
     ApiUser => $ENV{TEST_APIUSER},
@@ -31,6 +33,4 @@ like($status->{StatusID}, qr/^-?\d+$/);
 my $transferlist = $api->domain->transferlist;
 
 ok(grep { $_ eq $transfer->{TransferID} } map { $_->{ID} } @$transferlist);
-ok(grep { $_ eq $transfername } map { $_->{Domainname} } @$transferlist);
-
-done_testing(7);
+ok(grep { $_ eq $transfername } map { $_->{DomainName} } @$transferlist);
