@@ -11,6 +11,7 @@ MANIFEST			This list of files
 META.json
 META.yml
 README
+TODO
 t/00-load.t
 t/api.t
 t/dns-hosts.t
