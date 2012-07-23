@@ -4,6 +4,7 @@ use 5.006;
 use strict;
 use warnings;
 use Carp();
+use MIME::Base64();
 
 =head1 NAME
 
@@ -440,6 +441,11 @@ sub transfer {
     
     my $params = _argparse(@_);
     
+    my $b64epp;
+    if ($params->{EPPCode}) {
+        $b64epp = MIME::Base64::encode($params->{EPPCode});
+        $params->{EPPCode} = "base64:$b64epp";
+    }
     my %request = (
         Command => 'namecheap.domains.transfer.create',
         %$params,

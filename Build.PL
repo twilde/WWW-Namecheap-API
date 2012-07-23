@@ -17,6 +17,7 @@ my $builder = Module::Build->new(
         'perl' => 5.006,
         'LWP::UserAgent' => 0,
         'LWP::Protocol::https' => 0,
+	'MIME::Base64' => 0,
         'URI::Escape' => 0,
         'XML::Simple' => 0,
     },
