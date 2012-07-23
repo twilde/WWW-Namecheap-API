@@ -25,3 +25,6 @@ Revision history for WWW-Namecheap-API
 	* Update transferlist test and documentation for API
 	  capitalization change.
 	* Remove StateProvince workaround from t/domain-create.t.
+
+0.06	???
+	* Fix tests to reflect current Namecheap API status.

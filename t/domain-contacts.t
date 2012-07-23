@@ -57,9 +57,9 @@ my $tests = 4;
 
 foreach my $contact (qw(Registrant Tech Admin AuxBilling)) {
     foreach my $key (keys %{$contacts->{$contact}}) {
-        if ($key eq 'StateProvinceChoice') {
+        if ($key eq 'StateProvince') {
             is($contacts->{$contact}->{$key}, $expected{StateProvince});
-        } elsif ($key eq 'StateProvince') {
+        } elsif ($key eq 'StateProvinceChoice') {
             next; # unable to test unknown API behavior
         } elsif ($expected{$key}) {
             is($contacts->{$contact}->{$key}, $expected{$key});
@@ -89,9 +89,9 @@ $tests += 3;
 
 foreach my $contact (qw(Registrant Tech Admin AuxBilling)) {
     foreach my $key (keys %{$contacts2->{$contact}}) {
-        if ($key eq 'StateProvinceChoice') {
+        if ($key eq 'StateProvince') {
             is($contacts2->{$contact}->{$key}, $modified{StateProvince});
-        } elsif ($key eq 'StateProvince') {
+        } elsif ($key eq 'StateProvinceChoice') {
             next; # unable to test unknown API behavior
         } elsif ($modified{$key}) {
             is($contacts2->{$contact}->{$key}, $modified{$key});
