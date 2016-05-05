@@ -111,23 +111,25 @@ Register a new domain name.
 Example:
 
   my $result = $domain->create(
-      UserName => 'username', # optional if DefaultUser specified in $api
-      ClientIp => '1.2.3.4', # optional if DefaultIp specified in $api
+      UserName => 'username',    # optional if DefaultUser specified in $api
+      ClientIp => '1.2.3.4',     # optional if DefaultIp specified in $api
       DomainName => 'example.com',
-      Years => 1,
+      Years => 1,                                # required; default is 2
       Registrant => {
           OrganizationName => 'Example Dot Com', # optional
+          JobTitle => 'CTO',                     # optional
           FirstName => 'Domain',
           LastName => 'Manager',
           Address1 => '123 Fake Street',
-          Address2 => 'Suite 555', # optional
+          Address2 => 'Suite 555',               # optional
           City => 'Univille',
           StateProvince => 'SD',
-          StateProvinceChoice => 'S', # for 'State' or 'P' for 'Province'
+          StateProvinceChoice => 'S',            # optional; 'S' for 'State' or 'P' for 'Province'
           PostalCode => '12345',
           Country => 'US',
           Phone => '+1.2025551212',
-          Fax => '+1.2025551212', # optional
+          PhoneExt => '4444',                    # optional
+          Fax => '+1.2025551212',                # optional
           EmailAddress => 'foo@example.com',
       },
       Tech => {
@@ -139,12 +141,21 @@ Example:
       AuxBilling => {
           # same fields as Registrant
       },
+      Billing => {
+          # Optional; fields as Registrant except OrganizationName, JobTitle
+      },
       Nameservers => 'ns1.foo.com,ns2.bar.com', # optional
-      AddFreeWhoisguard => 'yes', # or 'no', default 'yes'
-      WGEnabled => 'yes', # or 'no', default 'yes'
+      AddFreeWhoisguard => 'yes',               # or 'no', default 'no'
+      WGEnabled => 'yes',                       # or 'no', default 'no'
+      PromotionCode => 'some-string',           # optional
+      IdnCode => '',                            # optional, see Namecheap API doc
+      'Extended attributes' => '',              # optional, see Namecheap API doc
+      IsPremiumDomain => '',                    # optional, see Namecheap API doc
+      PremiumPrice => '',                       # optional, see Namecheap API doc
+      EapFreee => '',                           # optional, see Namecheap API doc
   );
 
-Unspecified contacts will be automatically copied from the registrant, which
+Unspecified contacts will be automatically copied from Registrant, which
 must be provided.
 
 Returns:
@@ -171,20 +182,28 @@ sub create {
         UserName => $params->{'UserName'},
         DomainName => $params->{'DomainName'},
         Years => $params->{Years},
-        Nameservers => $params->{'Nameservers'},
-        AddFreeWhoisguard => $params->{'AddFreeWhoisguard'} || 'yes',
-        WGEnabled => $params->{'WGEnabled'} || 'yes',
     );
-    
+
+    # Optional parameters are only included if supplied in the function argument
+    foreach my $parameter (qw(PromotionCode Nameservers IdnCode AddFreeWhoisguard WGEnabled IsPremiumDomain PremiumPrice EapFee), 'Extended attributes') {
+        $request{$parameter} = $params->{$parameter} if (exists $params->{$parameter});
+    }
+
     foreach my $contact (qw(Registrant Tech Admin AuxBilling)) {
         $params->{$contact} ||= $params->{Registrant};
         map { $request{"$contact$_"} = $params->{$contact}{$_} } keys %{$params->{$contact}};
     }
-    
+
+    if ($params->{Billing}) {
+        my $contact = "Billing";
+        # Billing does not have these keys: OrganizationName, JobTitle
+        map { $request{"$contact$_"} = $params->{$contact}{$_} } keys %{$params->{$contact}};
+    }
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainCreateResult};
 }
 
