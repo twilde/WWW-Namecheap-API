@@ -207,6 +207,31 @@ sub create {
     return $xml->{CommandResponse}->{DomainCreateResult};
 }
 
+=head2 $domain->getinfo(DomainName => 'example.com')
+
+Returns a hashref containing information about the requested domain.
+
+=cut
+
+sub getinfo {
+    my $self = shift;
+
+    my $params = _argparse(@_);
+
+    return unless $params->{'DomainName'};
+
+    my %request = (
+        Command => 'namecheap.domains.getinfo',
+        %$params,
+    );
+
+    my $xml = $self->api->request(%request);
+
+    return unless ($xml && $xml->{Status} eq 'OK');
+
+    return $xml->{CommandResponse}->{DomainGetInfoResult};
+}
+
 =head2 $domain->list(%hash)
 
 Get a list of domains in your account.  Automatically handles the Namecheap
