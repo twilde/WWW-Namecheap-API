@@ -38,17 +38,17 @@ Requires a WWW::Namecheap::API object.
 
 sub new {
     my $class = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     for (qw(API)) {
         Carp::croak("${class}->new(): Mandatory parameter $_ not provided.") unless $params->{$_};
     }
-    
+
     my $self = {
         api => $params->{'API'},
     };
-    
+
     return bless($self, $class);
 }
 
@@ -62,7 +62,7 @@ domain names as the keys and 0/1 as the values for not available/available.
         example2.com
         foobar.com
     )]);
-    
+
 Will give a $result something like:
 
     $result = {
@@ -75,9 +75,9 @@ Will give a $result something like:
 
 sub check {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %domains = map { $_ => -1 } @{$params->{'Domains'}};
     my $DomainList = join(',', keys %domains);
     my $xml = $self->api->request(
@@ -86,9 +86,9 @@ sub check {
         UserName => $params->{'UserName'},
         DomainList => $DomainList,
     );
-    
+
     return unless $xml;
-    
+
     foreach my $entry (@{$xml->{CommandResponse}->{DomainCheckResult}}) {
         unless ($domains{$entry->{Domain}}) {
             Carp::carp("Unexpected domain found: $entry->{Domain}");
@@ -100,7 +100,7 @@ sub check {
             $domains{$entry->{Domain}} = 0;
         }
     }
-    
+
     return \%domains;
 }
 
@@ -173,9 +173,9 @@ Returns:
 
 sub create {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %request = (
         Command => 'namecheap.domains.create',
         ClientIp => $params->{'ClientIp'},
@@ -239,9 +239,9 @@ Returns an arrayref of hashrefs:
 
 sub list {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %request = (
         Command => 'namecheap.domains.getList',
         ClientIp => $params->{'ClientIp'},
@@ -251,15 +251,15 @@ sub list {
         ListType => $params->{'ListType'},
         SearchTerm => $params->{'SearchTerm'},
     );
-    
+
     my @domains;
-    
+
     my $break = 0;
     while (1) {
         my $xml = $self->api->request(%request);
-        
+
         last unless $xml;
-        
+
         if (ref($xml->{CommandResponse}->{DomainGetListResult}->{Domain}) eq 'ARRAY') {
             push(@domains, @{$xml->{CommandResponse}->{DomainGetListResult}->{Domain}});
         } elsif (ref($xml->{CommandResponse}->{DomainGetListResult}->{Domain}) eq 'HASH') {
@@ -273,7 +273,7 @@ sub list {
             $request{Page}++;
         }
     }
-    
+
     return \@domains;
 }
 
@@ -308,20 +308,20 @@ ol' data structure:
 
 sub getcontacts {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     return unless $params->{'DomainName'};
-    
+
     my %request = (
         Command => 'namecheap.domains.getContacts',
         %$params,
     );
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainContactsResult};
 }
 
@@ -364,7 +364,7 @@ Example:
 Unspecified contacts will be automatically copied from the registrant, which
 must be provided.
 
-$result is a small hashref confirming back the domain that was modified 
+$result is a small hashref confirming back the domain that was modified
 and whether the operation was successful or not:
 
     $result = {
@@ -376,27 +376,27 @@ and whether the operation was successful or not:
 
 sub setcontacts {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     return unless $params->{'DomainName'};
-    
+
     my %request = (
         Command => 'namecheap.domains.setContacts',
         ClientIp => $params->{'ClientIp'},
         UserName => $params->{'UserName'},
         DomainName => $params->{'DomainName'},
     );
-    
+
     foreach my $contact (qw(Registrant Tech Admin AuxBilling)) {
         $params->{$contact} ||= $params->{Registrant};
         map { $request{"$contact$_"} = $params->{$contact}{$_} } keys %{$params->{$contact}};
     }
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainSetContactResult};
 }
 
@@ -410,20 +410,20 @@ hour to avoid excessive API load.
 
 sub gettldlist {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %request = (
         Command => 'namecheap.domains.getTldList',
         %$params,
     );
-    
+
     if (!$self->{_tldlist_cachetime} || time() - $self->{_tldlist_cachetime} > 3600) {
         my $xml = $self->api->request(%request);
         $self->{_tldlist_cache} = $xml->{CommandResponse}->{Tlds}->{Tld};
         $self->{_tldlist_cachetime} = time();
     }
-    
+
     return $self->{_tldlist_cache};
 }
 
@@ -457,9 +457,9 @@ L<https://www.namecheap.com/support/api/domains-transfer/transfer-statuses.aspx>
 
 sub transfer {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my $b64epp;
     if ($params->{EPPCode} && $params->{EPPCode} !~ /^base64:/) {
         $b64epp = MIME::Base64::encode($params->{EPPCode});
@@ -469,11 +469,11 @@ sub transfer {
         Command => 'namecheap.domains.transfer.create',
         %$params,
     );
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainTransferCreateResult};
 }
 
@@ -493,18 +493,18 @@ the transferlist().  Returns a hashref:
 
 sub transferstatus {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %request = (
         Command => 'namecheap.domains.transfer.getStatus',
         %$params,
     );
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainTransferGetStatusResult};
 }
 
@@ -541,9 +541,9 @@ Returns an arrayref of hashrefs:
 
 sub transferlist {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %request = (
         Command => 'namecheap.domains.transfer.getList',
         ClientIp => $params->{'ClientIp'},
@@ -553,15 +553,15 @@ sub transferlist {
         ListType => $params->{'ListType'},
         SearchTerm => $params->{'SearchTerm'},
     );
-    
+
     my @transfers;
-    
+
     my $break = 0;
     while (1) {
         my $xml = $self->api->request(%request);
-        
+
         last unless $xml;
-        
+
         push(@transfers, @{$xml->{CommandResponse}->{TransferGetListResult}->{Transfer}});
         if ($xml->{CommandResponse}->{Paging}->{TotalItems} <= ($request{Page} * $request{PageSize})) {
             last;
@@ -569,7 +569,7 @@ sub transferlist {
             $request{Page}++;
         }
     }
-    
+
     return \@transfers;
 }
 

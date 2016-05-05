@@ -35,16 +35,16 @@ can be accessed via convenience methods from an API object.  Brief
 example:
 
     use WWW::Namecheap::API;
-    
+
     my $api = WWW::Namecheap::API->new(
         System => 'test',
         ApiUser => 'wwwnamecheapapi',
         ApiKey => 'keyhere',
         DefaultIp => '1.2.3.4',
     );
-    
+
     my $result = $api->domain->check(Domains => ['example.com']);
-    
+
     if ($result->{'example.com'}) {
         $api->domain->create(
             DomainName => 'example.com',
@@ -108,17 +108,17 @@ get objects of those classes directly).
 
 sub new {
     my $class = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     for (qw(ApiUser ApiKey)) {
         Carp::croak("${class}->new(): Mandatory parameter $_ not provided.") unless $params->{$_};
     }
-    
+
     my $ua = LWP::UserAgent->new(
         agent => $params->{'Agent'} || "WWW::Namecheap::API/$VERSION",
     );
-    
+
     my $apiurl;
     if ($params->{'ApiUrl'}) {
         $apiurl = $params->{'ApiUrl'}; # trust the user?!?!
@@ -129,7 +129,7 @@ sub new {
             $apiurl = $APIURL{'test'};
         }
     }
-    
+
     my $self = {
         ApiUrl => $apiurl,
         ApiUser => $params->{'ApiUser'},
@@ -138,7 +138,7 @@ sub new {
         DefaultIp => $params->{'DefaultIp'},
         _ua => $ua,
     };
-    
+
     return bless($self, $class);
 }
 
@@ -160,21 +160,21 @@ Namecheap API for the given Command.  Example:
 sub request {
     my $self = shift;
     my %reqparams = @_;
-    
+
     unless ($reqparams{'Command'}) {
         Carp::carp("No command specified, bailing!");
         return;
     }
-    
+
     my $clientip = delete($reqparams{'ClientIp'}) || $self->{'DefaultIp'};
     unless ($clientip) {
         Carp::carp("No Client IP or default IP specified, cannot perform request.");
         return;
     }
     my $username = delete($reqparams{'UserName'}) || $self->{'DefaultUser'};
-    
+
     map { delete($reqparams{$_}) unless defined($reqparams{$_}) } keys %reqparams;
-    
+
     my $ua = $self->{_ua}; # convenience
     my $url = sprintf('%s?ApiUser=%s&ApiKey=%s&UserName=%s&Command=%s&ClientIp=%s&',
         $self->{'ApiUrl'}, $self->{'ApiUser'}, $self->{'ApiKey'},
@@ -182,14 +182,14 @@ sub request {
     $url .= join('&', map { join('=', map { uri_escape($_) } each %reqparams) } keys %reqparams);
     #print STDERR "Sent URL $url\n";
     my $response = $ua->get($url);
-    
+
     unless ($response->is_success) {
         Carp::carp("Request failed: " . $response->message);
         return;
     }
-    
+
     my $xml = XMLin($response->content);
-    
+
     if ($xml->{Status} eq 'ERROR') {
         $self->{_error} = $xml;
         return;
@@ -207,17 +207,17 @@ internal caching.
 
 sub domain {
     my $self = shift;
-    
+
     if ($self->{_domain}) {
         return $self->{_domain};
     }
-    
+
     return $self->{_domain} = WWW::Namecheap::Domain->new(API => $self);
 }
 
 =head2 $api->dns()
 
-Helper method to create and return a WWW::Namecheap::DNS object utilizing 
+Helper method to create and return a WWW::Namecheap::DNS object utilizing
 this API object.  Always returns the same object within a given session via
 internal caching.
 
@@ -225,11 +225,11 @@ internal caching.
 
 sub dns {
     my $self = shift;
-    
+
     if ($self->{_dns}) {
         return $self->{_dns};
     }
-    
+
     return $self->{_dns} = WWW::Namecheap::DNS->new(API => $self);
 }
 

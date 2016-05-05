@@ -32,17 +32,17 @@ Perhaps a little code snippet.
 
 sub new {
     my $class = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     for (qw(API)) {
         Carp::croak("${class}->new(): Mandatory parameter $_ not provided.") unless $params->{$_};
     }
-    
+
     my $self = {
         api => $params->{'API'},
     };
-    
+
     return bless($self, $class);
 }
 

@@ -29,24 +29,24 @@ See L<WWW::Namecheap::API> for main documentation.
 
 =head2 WWW::Namecheap::Domain->new(API => $api)
 
-Instantiate a new DNS object for making DNS-related API calls. 
+Instantiate a new DNS object for making DNS-related API calls.
 Requires a WWW::Namecheap::API object.
 
 =cut
 
 sub new {
     my $class = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     for (qw(API)) {
         Carp::croak("${class}->new(): Mandatory parameter $_ not provided.") unless $params->{$_};
     }
-    
+
     my $self = {
         api => $params->{'API'},
     };
-    
+
     return bless($self, $class);
 }
 
@@ -71,7 +71,7 @@ or, for the Namecheap default:
         DefaultNS => 1,
     );
 
-$result is a small hashref confirming back the domain that was modified 
+$result is a small hashref confirming back the domain that was modified
 and whether the operation was successful or not:
 
     $result = {
@@ -83,31 +83,31 @@ and whether the operation was successful or not:
 
 sub setnameservers {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     return unless $params->{DomainName};
-    
+
     my %request = (
         ClientIp => $params->{'ClientIp'},
         UserName => $params->{'UserName'},
     );
-    
+
     if ($params->{DefaultNS}) {
         $request{Command} = 'namecheap.domains.dns.setDefault';
     } else {
         $request{Command} = 'namecheap.domains.dns.setCustom';
         $request{Nameservers} = join(',', @{$params->{Nameservers}});
     }
-    
+
     my ($sld, $tld) = split(/[.]/, $params->{DomainName}, 2);
     $request{SLD} = $sld;
     $request{TLD} = $tld;
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     if ($params->{DefaultNS}) {
         return $xml->{CommandResponse}->{DomainDNSSetDefaultResult};
     } else {
@@ -133,25 +133,25 @@ your management.  Returns a data structure that looks like this:
 
 sub getnameservers {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     return unless $params->{DomainName};
-    
+
     my %request = (
         Command => 'namecheap.domains.dns.getList',
         ClientIp => $params->{'ClientIp'},
         UserName => $params->{'UserName'},
     );
-    
+
     my ($sld, $tld) = split(/[.]/, $params->{DomainName}, 2);
     $request{SLD} = $sld;
     $request{TLD} = $tld;
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainDNSGetListResult};
 }
 
@@ -182,35 +182,35 @@ possible values of each of these fields.
 
 sub gethosts {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     return unless $params->{DomainName};
-    
+
     my %request = (
         Command => 'namecheap.domains.dns.getHosts',
         ClientIp => $params->{'ClientIp'},
         UserName => $params->{'UserName'},
     );
-    
+
     my ($sld, $tld) = split(/[.]/, $params->{DomainName}, 2);
     $request{SLD} = $sld;
     $request{TLD} = $tld;
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
 
     unless ($xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host}) {
         $xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host} = $xml->{CommandResponse}->{DomainDNSGetHostsResult}->{host};
     }
-    
+
     if ($xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host} &&
         ref($xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host}) eq 'HASH') {
         my $arrayref = [ $xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host} ];
         $xml->{CommandResponse}->{DomainDNSGetHostsResult}->{Host} = $arrayref;
     }
-    
+
     return $xml->{CommandResponse}->{DomainDNSGetHostsResult};
 }
 
@@ -272,22 +272,22 @@ records.
 
 sub sethosts {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     return unless $params->{DomainName};
-    
+
     my %request = (
         Command => 'namecheap.domains.dns.setHosts',
         ClientIp => $params->{'ClientIp'},
         UserName => $params->{'UserName'},
         EmailType => $params->{'EmailType'},
     );
-    
+
     my ($sld, $tld) = split(/[.]/, $params->{DomainName}, 2);
     $request{SLD} = $sld;
     $request{TLD} = $tld;
-    
+
     my $hostcount = 1;
     foreach my $host (@{$params->{Hosts}}) {
         next unless ($host->{Name} && $host->{Type} && $host->{Address});
@@ -300,11 +300,11 @@ sub sethosts {
         $request{"TTL$hostcount"} = $host->{TTL};
         $hostcount++;
     }
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainDNSSetHostsResult};
 }
 
