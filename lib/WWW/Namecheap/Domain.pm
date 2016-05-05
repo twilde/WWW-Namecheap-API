@@ -461,7 +461,7 @@ sub transfer {
     my $params = _argparse(@_);
     
     my $b64epp;
-    if ($params->{EPPCode}) {
+    if ($params->{EPPCode} && $params->{EPPCode} !~ /^base64:/) {
         $b64epp = MIME::Base64::encode($params->{EPPCode});
         $params->{EPPCode} = "base64:$b64epp";
     }
