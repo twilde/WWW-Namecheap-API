@@ -88,8 +88,12 @@ sub check {
     );
     
     return unless $xml;
-    
-    foreach my $entry (@{$xml->{CommandResponse}->{DomainCheckResult}}) {
+
+    my $result = $xml->{CommandResponse}->{DomainCheckResult};
+    # XML returns a hashref if only one returned value, otherwise an array
+    $result = [$result] if (ref $result eq 'HASH');
+
+    foreach my $entry (@$result) {
         unless ($domains{$entry->{Domain}}) {
             Carp::carp("Unexpected domain found: $entry->{Domain}");
             next;
