@@ -18,7 +18,7 @@ WWW::Namecheap::API - Perl interface to the Namecheap API
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 our %APIURL = (
     prod => 'https://api.namecheap.com/xml.response',
     test => 'https://api.sandbox.namecheap.com/xml.response',

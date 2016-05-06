@@ -12,7 +12,7 @@ WWW::Namecheap::Domain - Namecheap API domain methods
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 SYNOPSIS
 
