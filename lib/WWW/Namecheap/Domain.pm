@@ -38,17 +38,17 @@ Requires a WWW::Namecheap::API object.
 
 sub new {
     my $class = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     for (qw(API)) {
         Carp::croak("${class}->new(): Mandatory parameter $_ not provided.") unless $params->{$_};
     }
-    
+
     my $self = {
         api => $params->{'API'},
     };
-    
+
     return bless($self, $class);
 }
 
@@ -62,7 +62,7 @@ domain names as the keys and 0/1 as the values for not available/available.
         example2.com
         foobar.com
     )]);
-    
+
 Will give a $result something like:
 
     $result = {
@@ -75,9 +75,9 @@ Will give a $result something like:
 
 sub check {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %domains = map { $_ => -1 } @{$params->{'Domains'}};
     my $DomainList = join(',', keys %domains);
     my $xml = $self->api->request(
@@ -86,9 +86,9 @@ sub check {
         UserName => $params->{'UserName'},
         DomainList => $DomainList,
     );
-    
+
     return unless $xml;
-    
+
     foreach my $entry (@{$xml->{CommandResponse}->{DomainCheckResult}}) {
         unless ($domains{$entry->{Domain}}) {
             Carp::carp("Unexpected domain found: $entry->{Domain}");
@@ -100,7 +100,7 @@ sub check {
             $domains{$entry->{Domain}} = 0;
         }
     }
-    
+
     return \%domains;
 }
 
@@ -111,23 +111,25 @@ Register a new domain name.
 Example:
 
   my $result = $domain->create(
-      UserName => 'username', # optional if DefaultUser specified in $api
-      ClientIp => '1.2.3.4', # optional if DefaultIp specified in $api
+      UserName => 'username',    # optional if DefaultUser specified in $api
+      ClientIp => '1.2.3.4',     # optional if DefaultIp specified in $api
       DomainName => 'example.com',
-      Years => 1,
+      Years => 1,                                # required; default is 2
       Registrant => {
           OrganizationName => 'Example Dot Com', # optional
+          JobTitle => 'CTO',                     # optional
           FirstName => 'Domain',
           LastName => 'Manager',
           Address1 => '123 Fake Street',
-          Address2 => 'Suite 555', # optional
+          Address2 => 'Suite 555',               # optional
           City => 'Univille',
           StateProvince => 'SD',
-          StateProvinceChoice => 'S', # for 'State' or 'P' for 'Province'
+          StateProvinceChoice => 'S',            # optional; 'S' for 'State' or 'P' for 'Province'
           PostalCode => '12345',
           Country => 'US',
           Phone => '+1.2025551212',
-          Fax => '+1.2025551212', # optional
+          PhoneExt => '4444',                    # optional
+          Fax => '+1.2025551212',                # optional
           EmailAddress => 'foo@example.com',
       },
       Tech => {
@@ -139,12 +141,21 @@ Example:
       AuxBilling => {
           # same fields as Registrant
       },
+      Billing => {
+          # Optional; fields as Registrant except OrganizationName, JobTitle
+      },
       Nameservers => 'ns1.foo.com,ns2.bar.com', # optional
-      AddFreeWhoisguard => 'yes', # or 'no', default 'yes'
-      WGEnabled => 'yes', # or 'no', default 'yes'
+      AddFreeWhoisguard => 'yes',               # or 'no', default 'no'
+      WGEnabled => 'yes',                       # or 'no', default 'no'
+      PromotionCode => 'some-string',           # optional
+      IdnCode => '',                            # optional, see Namecheap API doc
+      'Extended attributes' => '',              # optional, see Namecheap API doc
+      IsPremiumDomain => '',                    # optional, see Namecheap API doc
+      PremiumPrice => '',                       # optional, see Namecheap API doc
+      EapFreee => '',                           # optional, see Namecheap API doc
   );
 
-Unspecified contacts will be automatically copied from the registrant, which
+Unspecified contacts will be automatically copied from Registrant, which
 must be provided.
 
 Returns:
@@ -162,30 +173,63 @@ Returns:
 
 sub create {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %request = (
         Command => 'namecheap.domains.create',
         ClientIp => $params->{'ClientIp'},
         UserName => $params->{'UserName'},
         DomainName => $params->{'DomainName'},
         Years => $params->{Years},
-        Nameservers => $params->{'Nameservers'},
-        AddFreeWhoisguard => $params->{'AddFreeWhoisguard'} || 'yes',
-        WGEnabled => $params->{'WGEnabled'} || 'yes',
     );
-    
+
+    # Optional parameters are only included if supplied in the function argument
+    foreach my $parameter (qw(PromotionCode Nameservers IdnCode AddFreeWhoisguard WGEnabled IsPremiumDomain PremiumPrice EapFee), 'Extended attributes') {
+        $request{$parameter} = $params->{$parameter} if (exists $params->{$parameter});
+    }
+
     foreach my $contact (qw(Registrant Tech Admin AuxBilling)) {
         $params->{$contact} ||= $params->{Registrant};
         map { $request{"$contact$_"} = $params->{$contact}{$_} } keys %{$params->{$contact}};
     }
-    
+
+    if ($params->{Billing}) {
+        my $contact = "Billing";
+        # Billing does not have these keys: OrganizationName, JobTitle
+        map { $request{"$contact$_"} = $params->{$contact}{$_} } keys %{$params->{$contact}};
+    }
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainCreateResult};
+}
+
+=head2 $domain->getinfo(DomainName => 'example.com')
+
+Returns a hashref containing information about the requested domain.
+
+=cut
+
+sub getinfo {
+    my $self = shift;
+
+    my $params = _argparse(@_);
+
+    return unless $params->{'DomainName'};
+
+    my %request = (
+        Command => 'namecheap.domains.getinfo',
+        %$params,
+    );
+
+    my $xml = $self->api->request(%request);
+
+    return unless ($xml && $xml->{Status} eq 'OK');
+
+    return $xml->{CommandResponse}->{DomainGetInfoResult};
 }
 
 =head2 $domain->list(%hash)
@@ -220,9 +264,9 @@ Returns an arrayref of hashrefs:
 
 sub list {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %request = (
         Command => 'namecheap.domains.getList',
         ClientIp => $params->{'ClientIp'},
@@ -232,15 +276,15 @@ sub list {
         ListType => $params->{'ListType'},
         SearchTerm => $params->{'SearchTerm'},
     );
-    
+
     my @domains;
-    
+
     my $break = 0;
     while (1) {
         my $xml = $self->api->request(%request);
-        
+
         last unless $xml;
-        
+
         if (ref($xml->{CommandResponse}->{DomainGetListResult}->{Domain}) eq 'ARRAY') {
             push(@domains, @{$xml->{CommandResponse}->{DomainGetListResult}->{Domain}});
         } elsif (ref($xml->{CommandResponse}->{DomainGetListResult}->{Domain}) eq 'HASH') {
@@ -254,7 +298,7 @@ sub list {
             $request{Page}++;
         }
     }
-    
+
     return \@domains;
 }
 
@@ -289,20 +333,20 @@ ol' data structure:
 
 sub getcontacts {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     return unless $params->{'DomainName'};
-    
+
     my %request = (
         Command => 'namecheap.domains.getContacts',
         %$params,
     );
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainContactsResult};
 }
 
@@ -345,7 +389,7 @@ Example:
 Unspecified contacts will be automatically copied from the registrant, which
 must be provided.
 
-$result is a small hashref confirming back the domain that was modified 
+$result is a small hashref confirming back the domain that was modified
 and whether the operation was successful or not:
 
     $result = {
@@ -357,27 +401,27 @@ and whether the operation was successful or not:
 
 sub setcontacts {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     return unless $params->{'DomainName'};
-    
+
     my %request = (
         Command => 'namecheap.domains.setContacts',
         ClientIp => $params->{'ClientIp'},
         UserName => $params->{'UserName'},
         DomainName => $params->{'DomainName'},
     );
-    
+
     foreach my $contact (qw(Registrant Tech Admin AuxBilling)) {
         $params->{$contact} ||= $params->{Registrant};
         map { $request{"$contact$_"} = $params->{$contact}{$_} } keys %{$params->{$contact}};
     }
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainSetContactResult};
 }
 
@@ -391,20 +435,20 @@ hour to avoid excessive API load.
 
 sub gettldlist {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %request = (
         Command => 'namecheap.domains.getTldList',
         %$params,
     );
-    
+
     if (!$self->{_tldlist_cachetime} || time() - $self->{_tldlist_cachetime} > 3600) {
         my $xml = $self->api->request(%request);
         $self->{_tldlist_cache} = $xml->{CommandResponse}->{Tlds}->{Tld};
         $self->{_tldlist_cachetime} = time();
     }
-    
+
     return $self->{_tldlist_cache};
 }
 
@@ -438,11 +482,11 @@ L<https://www.namecheap.com/support/api/domains-transfer/transfer-statuses.aspx>
 
 sub transfer {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my $b64epp;
-    if ($params->{EPPCode}) {
+    if ($params->{EPPCode} && $params->{EPPCode} !~ /^base64:/) {
         $b64epp = MIME::Base64::encode($params->{EPPCode});
         $params->{EPPCode} = "base64:$b64epp";
     }
@@ -450,11 +494,11 @@ sub transfer {
         Command => 'namecheap.domains.transfer.create',
         %$params,
     );
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainTransferCreateResult};
 }
 
@@ -474,18 +518,18 @@ the transferlist().  Returns a hashref:
 
 sub transferstatus {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %request = (
         Command => 'namecheap.domains.transfer.getStatus',
         %$params,
     );
-    
+
     my $xml = $self->api->request(%request);
-    
+
     return unless $xml;
-    
+
     return $xml->{CommandResponse}->{DomainTransferGetStatusResult};
 }
 
@@ -522,9 +566,9 @@ Returns an arrayref of hashrefs:
 
 sub transferlist {
     my $self = shift;
-    
+
     my $params = _argparse(@_);
-    
+
     my %request = (
         Command => 'namecheap.domains.transfer.getList',
         ClientIp => $params->{'ClientIp'},
@@ -534,15 +578,15 @@ sub transferlist {
         ListType => $params->{'ListType'},
         SearchTerm => $params->{'SearchTerm'},
     );
-    
+
     my @transfers;
-    
+
     my $break = 0;
     while (1) {
         my $xml = $self->api->request(%request);
-        
+
         last unless $xml;
-        
+
         push(@transfers, @{$xml->{CommandResponse}->{TransferGetListResult}->{Transfer}});
         if ($xml->{CommandResponse}->{Paging}->{TotalItems} <= ($request{Page} * $request{PageSize})) {
             last;
@@ -550,7 +594,7 @@ sub transferlist {
             $request{Page}++;
         }
     }
-    
+
     return \@transfers;
 }
 
