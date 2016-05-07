@@ -27,7 +27,7 @@ See L<WWW::Namecheap::API> for main documentation.
 
 =head1 SUBROUTINES/METHODS
 
-=head2 WWW::Namecheap::Domain->new(API => $api)
+=head2 WWW::Namecheap::DNS->new(API => $api)
 
 Instantiate a new DNS object for making DNS-related API calls.
 Requires a WWW::Namecheap::API object.
