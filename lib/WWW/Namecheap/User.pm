@@ -21,7 +21,7 @@ Perhaps a little code snippet.
 
     use WWW::Namecheap::User;
 
-    my $foo = WWW::Namecheap::User->new();
+    my $foo = WWW::Namecheap::User->new(API => $api);
     ...
 
 =head1 SUBROUTINES/METHODS
@@ -44,6 +44,28 @@ sub new {
     };
 
     return bless($self, $class);
+}
+
+=head2 $user->getbalances()
+
+Returns a hashref containing information about the user's balances.
+
+See also: https://www.namecheap.com/support/api/methods/users/get-balances.aspx
+
+=cut
+
+sub getbalances {
+    my $self = shift;
+
+    my %request = (
+        Command => 'namecheap.users.getBalances',
+    );
+
+    my $xml = $self->api->request(%request);
+
+    return unless ($xml && $xml->{Status} eq 'OK');
+
+    return $xml->{CommandResponse}->{UserGetBalancesResult};
 }
 
 =head2 $user->api()

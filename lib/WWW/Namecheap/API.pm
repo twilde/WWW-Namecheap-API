@@ -233,6 +233,25 @@ sub dns {
     return $self->{_dns} = WWW::Namecheap::DNS->new(API => $self);
 }
 
+=head2 $api->user()
+
+Helper method to create and return a WWW::Namecheap::User object utilizing
+this API object.  Always returns the same object within a given session via
+internal caching.
+
+=cut
+
+sub user {
+    my $self = shift;
+
+    if ($self->{_user}) {
+        return $self->{_user};
+    }
+
+	require WWW::Namecheap::User;
+    return $self->{_user} = WWW::Namecheap::User->new(API => $self);
+}
+
 =head2 $api->error()
 
 Returns the full XML response from the API if an error occurred during
